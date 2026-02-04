@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers"; // <--- Import Headers
-import { checkRateLimit } from "@/lib/rate-limit"; // <--- Import helper
+import { headers } from "next/headers";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   content: z.string().min(1, "Message cannot be empty").max(500, "Message is too long"),
@@ -30,10 +30,26 @@ export async function sendConfession(formData: FormData) {
 
   // 2. RATE LIMIT CHECK
   const headerList = await headers();
-  // Get IP: checks 'x-forwarded-for' (if behind Nginx/Cloudflare) or fallback to 'unknown'
-  const ip = headerList.get("x-forwarded-for")?.split(",")[0] || "unknown";
+  
+  // FIX: SECURITY - IP Spoofing Prevention
+  // We prefer 'x-real-ip' because standard proxies (Nginx) overwrite this with the direct connection IP,
+  // making it much harder for a client to spoof than 'x-forwarded-for'.
+  let ip = headerList.get("x-real-ip");
+  
+  if (!ip) {
+      const forwarded = headerList.get("x-forwarded-for");
+      if (forwarded) {
+          // If we must use forwarded-for, we take the first one. 
+          // NOTE: Ensure your Nginx config has "proxy_set_header X-Forwarded-For $remote_addr;"
+          ip = forwarded.split(",")[0].trim();
+      }
+  }
+  
+  // Fallback if no headers found (e.g., local dev)
+  ip = ip || "unknown";
 
-  if (ip !== "unknown") {
+  // Only rate limit if we can identify the IP and it's not localhost
+  if (ip !== "unknown" && ip !== "127.0.0.1" && ip !== "::1") {
     const limit = checkRateLimit(ip);
     if (!limit.success) {
       const timeLeft = Math.ceil((limit.resetAt! - Date.now()) / 1000);
@@ -49,26 +65,21 @@ export async function sendConfession(formData: FormData) {
     
     if (!receiver) return { error: "User not found." };
 
-    // Handle sender logic if not anonymous
-    let senderId = null;
-    
-    // Note: If you have auth logic, you can add it here to populate senderId
-
     await prisma.confession.create({
       data: {
         content,
         receiverId,
         isAnonymous,
-        senderId, 
+        senderId: null, 
       },
     });
 
     revalidatePath(`/u/${usernamePath}`);
-    revalidatePath(`/dashboard`);
+    revalidatePath("/dashboard");
     
     return { success: true };
   } catch (error) {
-    console.error("Confession error:", error);
-    return { error: "Something went wrong sending your message." };
+    console.error("Confession Error:", error);
+    return { error: "Failed to send confession." };
   }
 }

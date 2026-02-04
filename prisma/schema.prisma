@@ -18,6 +18,9 @@ model User {
   
   sentConfessions     Confession[] @relation("SentConfessions")
   receivedConfessions Confession[] @relation("ReceivedConfessions")
+
+  // FIX: Index on username for faster login/search
+  @@index([username])
 }
 
 model Confession {
@@ -34,4 +37,12 @@ model Confession {
   
   receiverId  String
   receiver    User     @relation("ReceivedConfessions", fields: [receiverId], references: [id])
+
+  // FIX: Indexes for performance
+  // 1. Essential for "Get my messages" (Dashboard)
+  @@index([receiverId])
+  // 2. Essential for "Show messages I sent"
+  @@index([senderId])
+  // 3. Optimization for Public Profile (Pinned messages first)
+  @@index([receiverId, isPinned])
 }
