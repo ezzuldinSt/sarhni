@@ -1,0 +1,179 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { Menu, X, Home, User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { signOut } from "next-auth/react";
+import UserSearch from "./UserSearch";
+
+export default function MobileMenu({ session }: { session: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+
+  const toggleOpen = () => setIsOpen(!isOpen);
+
+  // 1. HYDRATION FIX: Only render portal after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 2. SCROLL LOCK: Freeze background when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
+  // 3. SWIPE LOGIC: Handle drag end
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // If user dragged > 100px to the right, close the menu
+    if (info.offset.x > 100) {
+      setIsOpen(false);
+    }
+  };
+
+  const menuVariants = {
+    closed: { 
+      x: "100%", 
+      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    },
+    open: { 
+      x: 0, 
+      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    }
+  };
+
+  return (
+    <div className="md:hidden">
+      {/* HAMBURGER BUTTON */}
+      <button 
+        onClick={toggleOpen} 
+        className="p-2 text-leather-accent hover:text-leather-pop transition-colors"
+        aria-label="Toggle Menu"
+      >
+        <Menu size={28} />
+      </button>
+
+      {/* PORTAL TO BODY */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* BACKDROP */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={toggleOpen}
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
+                aria-hidden="true"
+              />
+
+              {/* DRAWER PANEL */}
+              <motion.div
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={menuVariants}
+                // --- SWIPE GESTURES ---
+                drag="x" // Allow horizontal drag
+                dragConstraints={{ left: 0, right: 0 }} // Don't allow free dragging
+                dragElastic={{ left: 0, right: 0.5 }} // Rubber band effect on right pull
+                onDragEnd={handleDragEnd} // Detect swipe finish
+                // ----------------------
+                style={{ backgroundColor: "#2C1A1D" }}
+                className="fixed top-0 right-0 bottom-0 w-[80%] max-w-sm z-[9999] shadow-2xl flex flex-col p-6 border-l border-leather-600 touch-pan-x"
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center mb-8">
+                  <span className="text-xl font-bold text-leather-pop tracking-tight">Menu</span>
+                  <button 
+                    onClick={toggleOpen} 
+                    className="text-leather-accent hover:text-red-400 p-1"
+                    aria-label="Close Menu"
+                  >
+                    <X size={28} />
+                  </button>
+                </div>
+
+                {/* Search Bar */}
+                <div className="mb-8">
+                   <UserSearch className="w-full" />
+                </div>
+
+                {/* Navigation Links */}
+                <nav className="flex flex-col gap-6 text-lg">
+                  <Link 
+                    href="/" 
+                    onClick={toggleOpen}
+                    className={`flex items-center gap-4 ${pathname === '/' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                  >
+                    <Home size={20} /> Home
+                  </Link>
+
+                  {session?.user ? (
+                    <>
+                      <Link 
+                        href="/dashboard" 
+                        onClick={toggleOpen}
+                        className={`flex items-center gap-4 ${pathname === '/dashboard' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                      >
+                        <LayoutDashboard size={20} /> Dashboard
+                      </Link>
+                      <Link 
+                        href={`/u/${session.user.name}`} 
+                        onClick={toggleOpen}
+                        className={`flex items-center gap-4 ${pathname.startsWith('/u/') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                      >
+                        <User size={20} /> My Profile
+                      </Link>
+                      <Link 
+                        href="/dashboard/settings" 
+                        onClick={toggleOpen}
+                        className={`flex items-center gap-4 ${pathname === '/dashboard/settings' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                      >
+                        <Settings size={20} /> Settings
+                      </Link>
+
+                      <div className="h-px bg-leather-600/50 my-2" />
+
+                      <button 
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="flex items-center gap-4 text-red-400 font-bold"
+                      >
+                        <LogOut size={20} /> Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-px bg-leather-600/50 my-2" />
+                      <Link 
+                        href="/login" 
+                        onClick={toggleOpen}
+                        className="flex items-center gap-4 text-leather-pop font-bold"
+                      >
+                        <User size={20} /> Login / Register
+                      </Link>
+                    </>
+                  )}
+                </nav>
+                
+                <div className="mt-auto text-center">
+                   <p className="text-xs text-leather-500">Sarhni © 2026</p>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
+  );
+}

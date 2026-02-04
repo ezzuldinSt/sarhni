@@ -1,0 +1,81 @@
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { Card } from "@/components/ui/Card";
+import Link from "next/link";
+import ConfessionCard from "@/components/ConfessionCard"; // Import the updated card
+
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      _count: {
+        select: { receivedConfessions: true, sentConfessions: true }
+      },
+      // Fetch received confessions to show in dashboard
+      receivedConfessions: {
+         orderBy: { createdAt: 'desc' },
+         include: { sender: { select: { username: true, image: true } } }
+      },
+      sentConfessions: {
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: { receiver: true }
+      }
+    }
+  });
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold text-leather-pop">Hello, {user?.username} 👋</h1>
+      
+      {/* Stats Grid ... (Keep existing code) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* ... keep existing stats cards ... */}
+          <Card className="flex flex-col items-center justify-center p-8 bg-leather-800/80">
+          <span className="text-4xl font-bold text-white mb-2">{user?._count.receivedConfessions}</span>
+          <span className="text-leather-500 uppercase text-xs tracking-widest">Confessions Received</span>
+        </Card>
+        <Card className="flex flex-col items-center justify-center p-8 bg-leather-800/80">
+          <span className="text-4xl font-bold text-white mb-2">{user?._count.sentConfessions}</span>
+          <span className="text-leather-500 uppercase text-xs tracking-widest">Confessions Sent</span>
+        </Card>
+      </div>
+
+      {/* NEW SECTION: Received Messages with Share functionality */}
+      <div>
+        <h2 className="text-xl font-bold mb-4 text-leather-accent">Your Inbox</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {user?.receivedConfessions.map((confession, i) => (
+                // PASS isOwnerView={true} HERE
+                <ConfessionCard key={confession.id} confession={confession} index={i} isOwnerView={true} />
+            ))}
+             {user?.receivedConfessions.length === 0 && (
+             <p className="text-leather-500 italic col-span-full">Your inbox is empty. Share your profile link!</p>
+          )}
+        </div>
+      </div>
+
+      {/* ... Keep existing Recent Sent Activity section ... */}
+       <div>
+        <h2 className="text-xl font-bold mb-4 text-leather-accent mt-8">Recent Messages You Sent</h2>
+        {/* ... existing sent messages code ... */}
+         <div className="space-y-4">
+          {user?.sentConfessions.map((msg) => (
+            <Card key={msg.id} className="p-4 bg-leather-700/30 border-leather-600/20">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm text-leather-500">
+                  To: <Link href={`/u/${msg.receiver.username}`} className="text-leather-pop hover:underline">@{msg.receiver.username}</Link>
+                </span>
+                <span className="text-xs text-leather-600">{msg.createdAt.toLocaleDateString()}</span>
+              </div>
+              <p className="text-leather-accent/90">{msg.content}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

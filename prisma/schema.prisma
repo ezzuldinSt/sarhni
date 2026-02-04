@@ -1,0 +1,37 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  username      String       @unique
+  password      String?      // Nullable for OAuth
+  image         String?
+  bio           String?
+  createdAt     DateTime     @default(now())
+  
+  sentConfessions     Confession[] @relation("SentConfessions")
+  receivedConfessions Confession[] @relation("ReceivedConfessions")
+}
+
+model Confession {
+  id          String   @id @default(cuid())
+  content     String
+  reply       String?  // Null means no reply yet
+  replyAt     DateTime?
+  isPinned    Boolean  @default(false) 
+  isAnonymous Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  senderId    String?
+  sender      User?    @relation("SentConfessions", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("ReceivedConfessions", fields: [receiverId], references: [id])
+}
