@@ -54,3 +54,33 @@ export function checkRateLimit(ip: string) {
   record.count += 1;
   return { success: true };
 }
+
+// Factory for creating separate rate limiters with custom limits
+export function createRateLimiter(maxRequests: number, windowMs: number) {
+  const map = new Map<string, RateLimitRecord>();
+  let lastClean = Date.now();
+
+  return function check(ip: string) {
+    const now = Date.now();
+    if (now - lastClean > windowMs) {
+      lastClean = now;
+      for (const [key, rec] of map) {
+        if (now > rec.resetTime) map.delete(key);
+      }
+    }
+
+    const record = map.get(ip);
+
+    if (!record || now > record.resetTime) {
+      map.set(ip, { count: 1, resetTime: now + windowMs });
+      return { success: true, resetAt: 0 };
+    }
+
+    if (record.count >= maxRequests) {
+      return { success: false, resetAt: record.resetTime };
+    }
+
+    record.count += 1;
+    return { success: true, resetAt: 0 };
+  };
+}
