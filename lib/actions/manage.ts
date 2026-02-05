@@ -94,7 +94,7 @@ export async function togglePin(confessionId: string) {
   return { success: true, isPinned: !confession.isPinned };
 }
 
-export async function fetchConfessions(userId: string, cursorId?: string) {
+export async function fetchConfessions(userId: string, offset: number = 0) {
   const PAGE_SIZE = 12;
 
   try {
@@ -105,8 +105,7 @@ export async function fetchConfessions(userId: string, cursorId?: string) {
         { createdAt: 'desc' }
       ],
       take: PAGE_SIZE,
-      skip: cursorId ? 1 : 0,
-      cursor: cursorId ? { id: cursorId } : undefined,
+      skip: offset,
       include: {
         sender: { select: { username: true } },
         receiver: { select: { username: true } }

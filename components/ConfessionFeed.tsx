@@ -16,12 +16,15 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner }: 
   const [confessions, setConfessions] = useState<ConfessionWithUser[]>(initialConfessions);
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const offsetRef = useRef(initialConfessions.length);
+
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // FIX: Sync state when the server revalidates (e.g., after sending a message)
   useEffect(() => {
     setConfessions(initialConfessions);
+    offsetRef.current = initialConfessions.length;
+    setHasMore(true);
   }, [initialConfessions]);
 
   useEffect(() => {
@@ -31,17 +34,15 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner }: 
         if (target.isIntersecting && hasMore && !isLoading && confessions.length > 0) {
           setIsLoading(true);
           
-          const lastId = confessions[confessions.length - 1].id;
-          const newConfessions = await fetchConfessions(userId, lastId);
-          
+          const newConfessions = await fetchConfessions(userId, offsetRef.current);
+
           if (newConfessions.length === 0) {
             setHasMore(false);
           } else {
-            // FIX: Ensure we don't add duplicates if revalidation happens simultaneously
+            offsetRef.current += newConfessions.length;
             setConfessions((prev) => {
                 const existingIds = new Set(prev.map(c => c.id));
                 const uniqueNew = newConfessions.filter((c: any) => !existingIds.has(c.id));
-                if (uniqueNew.length === 0) setHasMore(false); // Stop if no new unique items
                 return [...prev, ...uniqueNew];
             });
           }
