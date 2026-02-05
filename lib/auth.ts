@@ -50,28 +50,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    // 1. Add role to the JWT token
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
-        token.role = user.role;
         token.sub = user.id;
+        token.role = user.role;
+        token.isBanned = user.isBanned;
+        token.username = (user as any).username;
+        token.image = user.image;
+      }
+      // Refresh user data from DB on explicit update trigger
+      if (trigger === "update" && token.sub) {
+        const freshUser = await prisma.user.findUnique({ where: { id: token.sub } });
+        if (freshUser) {
+          token.role = freshUser.role;
+          token.isBanned = freshUser.isBanned;
+          token.username = freshUser.username;
+          token.image = freshUser.image;
+        }
       }
       return token;
     },
-    // 2. Pass role from Token to Session
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
-        
-        // Fetch fresh data to get role updates instantly (e.g. if promoted while logged in)
-        const freshUser = await prisma.user.findUnique({ where: { id: token.sub } });
-        
-        if (freshUser) {
-           session.user.name = freshUser.username;
-           session.user.image = freshUser.image;
-           session.user.role = freshUser.role; // <--- Crucial
-           session.user.isBanned = freshUser.isBanned;
-        }
+        session.user.name = token.username as string;
+        session.user.image = token.image as string | null;
+        session.user.role = token.role as string;
+        session.user.isBanned = token.isBanned as boolean;
       }
       return session;
     },
