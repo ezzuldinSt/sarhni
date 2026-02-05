@@ -16,6 +16,7 @@
 /build
 /public/uploads/
 # misc
+GEMINI.md
 .DS_Store
 *.pem
 
