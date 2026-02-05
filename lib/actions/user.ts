@@ -10,7 +10,7 @@ export async function updateUserProfile(formData: FormData) {
   const userId = formData.get("userId") as string;
 
   if (!session || session.user.id !== userId) {
-    throw new Error("Unauthorized");
+    return { error: "Unauthorized" };
   }
 
   const bio = formData.get("bio") as string;
@@ -26,6 +26,7 @@ export async function updateUserProfile(formData: FormData) {
 
   revalidatePath("/dashboard/settings");
   revalidatePath(`/u/${userId}`); // Just in case
+  return { success: true };
 }
 
 // ... keep imports and updateUserProfile as they are ...

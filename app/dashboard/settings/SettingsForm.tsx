@@ -64,7 +64,11 @@ export default function SettingsForm({ user }: { user: any }) {
         }
       }
 
-      await updateUserProfile(formData);
+      const res = await updateUserProfile(formData);
+      if (res?.error) {
+        toast.error(res.error);
+        return;
+      }
 
       toast.success("Profile updated successfully!");
       router.refresh();
