@@ -38,7 +38,7 @@ Server Components fetch data via Prisma directly in `page.tsx` files. Mutations 
 - **`lib/rate-limit.ts`** - In-memory IP-based rate limiter (5 requests/60 seconds).
 - **`components/`** - React components. `ui/` has reusable primitives (Button, Card, Switch). Feature components handle confessions, feeds, sticker generation, admin dashboard.
 - **`hooks/useConfessionActions.ts`** - Manages optimistic updates for pin/delete/reply operations.
-- **`proxy.ts`** - Route middleware (used instead of standard `middleware.ts`). Protects `/dashboard`, `/admin`, `/owner`; redirects authenticated users away from `/login`, `/register`.
+- **`middleware.ts`** - Route middleware. Protects `/dashboard`, `/admin`, `/owner`; redirects authenticated users away from `/login`, `/register`.
 
 ### Database Schema (Prisma)
 
