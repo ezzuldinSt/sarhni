@@ -4,6 +4,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
+import { headers } from "next/headers";
+import { createRateLimiter } from "@/lib/rate-limit";
+
+// Rate limiter for registration: 3 attempts per hour per IP
+const checkRegistrationRateLimit = createRateLimiter(3, 60 * 60 * 1000);
 
 const registerSchema = z.object({
   username: z.string().min(3).regex(/^[a-zA-Z0-9_]+$/),
@@ -11,6 +16,17 @@ const registerSchema = z.object({
 });
 
 export async function registerUser(prevState: any, formData: FormData) {
+  // Get IP address for rate limiting
+  const headerList = await headers();
+  let ip = headerList.get("x-real-ip") || "unknown";
+
+  // Check rate limit
+  const rateLimit = checkRegistrationRateLimit(ip);
+  if (!rateLimit.success) {
+    const resetDate = new Date(rateLimit.resetAt);
+    return { error: `Too many registration attempts. Try again after ${resetDate.toLocaleTimeString()}.` };
+  }
+
   const data = Object.fromEntries(formData.entries());
   const validated = registerSchema.safeParse(data);
 

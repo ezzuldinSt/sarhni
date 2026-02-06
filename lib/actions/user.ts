@@ -4,6 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/lib/auth";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { z } from "zod";
+
+// Bio validation schema
+const bioSchema = z.string().max(500, "Bio must be at most 500 characters").optional();
 
 export async function updateUserProfile(formData: FormData) {
   const session = await auth();
@@ -14,9 +18,15 @@ export async function updateUserProfile(formData: FormData) {
   }
 
   const bio = formData.get("bio") as string;
-  const imageUrl = formData.get("imageUrl") as string; // Will come from the client logic
+  const imageUrl = formData.get("imageUrl") as string;
 
-  const data: any = { bio };
+  // Validate bio length
+  const bioValidation = bioSchema.safeParse(bio);
+  if (!bioValidation.success) {
+    return { error: bioValidation.error.errors[0].message };
+  }
+
+  const data: any = { bio: bioValidation.data };
   if (imageUrl) data.image = imageUrl;
 
   await prisma.user.update({

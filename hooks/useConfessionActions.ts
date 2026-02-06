@@ -33,16 +33,20 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
 
   const handleReply = async (id: string, text: string, onClose: () => void) => {
     if (!text.trim()) return;
-    const loading = toast.loading("Posting...");
+
+    // Optimistically show the reply
+    const previousReply = optimisticReply;
+    setOptimisticReply(text);
+
     const res = await replyToConfession(id, text);
     if (res?.error) {
+      // Revert on error
+      setOptimisticReply(previousReply);
       toast.error(res.error);
     } else {
       toast.success("Replied!");
-      setOptimisticReply(text);
       onClose();
     }
-    toast.dismiss(loading);
   };
 
   return {

@@ -19,7 +19,8 @@ const schema = z.object({
 export default function ConfessionForm({ receiverId, usernamePath, user }: { receiverId: string, usernamePath: string, user: any }) {
   const [isAnon, setIsAnon] = useState(true);
   const [isSent, setIsSent] = useState(false); // New state for success view
-  
+  const savedContentRef = useRef<string | null>(null); // Store content for error recovery
+
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema)
   });
@@ -31,6 +32,7 @@ export default function ConfessionForm({ receiverId, usernamePath, user }: { rec
     // 1. OPTIMISTIC UPDATE: Show success immediately
     setIsSent(true);
     const content = data.content; // Capture content before reset
+    savedContentRef.current = content; // Store for potential error recovery
     reset(); // Clear form instantly
 
     // 2. Prepare Data
@@ -45,13 +47,19 @@ export default function ConfessionForm({ receiverId, usernamePath, user }: { rec
     const res = await sendConfession(formData);
 
     if (res?.error) {
-        // Revert if failed (Rare)
+        // Revert if failed - restore the form content
         setIsSent(false);
+        // Restore the saved content
+        if (savedContentRef.current) {
+          reset({ content: savedContentRef.current });
+          savedContentRef.current = null;
+        }
         toast.error(res.error);
     } else {
         // Optional: Trigger a confetti or sound effect here
         toast.success("Sent into the void! 🚀");
-        
+        savedContentRef.current = null; // Clear saved content on success
+
         // Reset the "Sent" view after 3 seconds so they can send another
         setTimeout(() => setIsSent(false), 3000);
     }

@@ -42,7 +42,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       } else {
         const uniqueNew = newConfessions.filter((c: any) => !existingIdsRef.current.has(c.id));
         uniqueNew.forEach((c: any) => existingIdsRef.current.add(c.id));
-        offsetRef.current += newConfessions.length;
+        offsetRef.current += uniqueNew.length;
 
         if (uniqueNew.length > 0) {
           setConfessions((prev) => [...prev, ...uniqueNew]);

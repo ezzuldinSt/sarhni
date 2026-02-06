@@ -77,24 +77,36 @@ export async function deleteUserCompletely(targetUserId: string) {
   const role = await getCurrentRole();
   if (role !== "OWNER") return { error: "Only the Owner can delete users." };
 
-  // Cascade delete is usually handled by Prisma relations, 
-  // but let's be explicit to ensure cleanup
-  const deleteConfessions = prisma.confession.deleteMany({
-    where: { 
-      OR: [{ senderId: targetUserId }, { receiverId: targetUserId }]
+  try {
+    // Cascade delete is usually handled by Prisma relations,
+    // but let's be explicit to ensure cleanup
+    const deleteConfessions = prisma.confession.deleteMany({
+      where: {
+        OR: [{ senderId: targetUserId }, { receiverId: targetUserId }]
+      }
+    });
+
+    const deleteUser = prisma.user.delete({
+      where: { id: targetUserId }
+    });
+
+    await prisma.$transaction([deleteConfessions, deleteUser]);
+
+    revalidateTag("admin-users", "max");
+    revalidateTag("user-search", "max");
+    revalidateTag("user-profiles", "max");
+    revalidatePath("/owner", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete user:", error);
+    // Check for specific error types
+    if (error instanceof Error) {
+      if (error.message.includes("Record to delete does not exist")) {
+        return { error: "User not found." };
+      }
+      return { error: `Failed to delete user: ${error.message}` };
     }
-  });
-
-  const deleteUser = prisma.user.delete({
-    where: { id: targetUserId }
-  });
-
-  await prisma.$transaction([deleteConfessions, deleteUser]);
-
-  revalidateTag("admin-users", "max");
-  revalidateTag("user-search", "max");
-  revalidateTag("user-profiles", "max");
-  revalidatePath("/owner", "page");
-  return { success: true };
+    return { error: "An unexpected error occurred while deleting the user." };
+  }
 }
 

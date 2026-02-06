@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -15,11 +15,26 @@ export default function SettingsForm({ user }: { user: any }) {
   const [preview, setPreview] = useState(user?.image || "/placeholder-avatar.png");
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
+  const objectUrlRef = useRef<string | null>(null);
+
+  // Cleanup object URL on unmount or when preview changes to a non-blob URL
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current && !objectUrlRef.current.startsWith("/")) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Revoke previous object URL if it exists
+      if (objectUrlRef.current && !objectUrlRef.current.startsWith("/")) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
       const objectUrl = URL.createObjectURL(file);
+      objectUrlRef.current = objectUrl;
       setPreview(objectUrl);
     }
   };
@@ -27,39 +42,43 @@ export default function SettingsForm({ user }: { user: any }) {
   // NEW: Handle Delete
   const handleDeleteImage = async () => {
     if (!confirm("Are you sure you want to remove your profile picture?")) return;
-    
+
     setUploading(true); // Lock buttons
     const res = await deleteProfileImage();
-    
+
     if (res?.success) {
-        setPreview("/placeholder-avatar.png"); // Revert UI immediately
-        toast.success("Profile picture removed");
-        router.refresh(); // Refresh server data
+      // Revoke object URL if it was a blob
+      if (objectUrlRef.current && !objectUrlRef.current.startsWith("/")) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      setPreview("/placeholder-avatar.png"); // Revert UI immediately
+      toast.success("Profile picture removed");
+      router.refresh(); // Refresh server data
     } else {
-        toast.error("Failed to remove image");
-        setUploading(false);
+      toast.error("Failed to remove image");
     }
+
+    setUploading(false); // Always reset uploading state
   };
 
   const handleSubmit = async (formData: FormData) => {
     setUploading(true);
     const loadingToast = toast.loading("Updating profile...");
-    
+
     try {
       const file = formData.get("avatar") as File;
-      
+
       if (file && file.size > 0) {
         const uploadData = new FormData();
         uploadData.append("file", file);
 
         const uploadRes = await uploadImage(uploadData);
-        
+
         if ((uploadRes as any).success) {
           formData.set("imageUrl", (uploadRes as any).url);
         } else {
           toast.error("Image upload failed");
-          setUploading(false);
-          toast.dismiss(loadingToast);
           return;
         }
       }
@@ -76,9 +95,9 @@ export default function SettingsForm({ user }: { user: any }) {
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
-      setUploading(false);
     } finally {
       toast.dismiss(loadingToast);
+      setUploading(false);
     }
   };
 
