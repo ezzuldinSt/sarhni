@@ -18,14 +18,55 @@ function getMimeType(buffer: Uint8Array): string | null {
   if (header.startsWith("47494638")) return "image/gif"; // GIF8
   // WebP starts with 'RIFF' (52 49 46 46) ... then 'WEBP' at offset 8.
   // We'll trust RIFF for now as it's multimedia, but strict checking is safer.
-  if (header.startsWith("52494646")) return "image/webp"; 
+  if (header.startsWith("52494646")) return "image/webp";
+
+  return null;
+}
+
+// Helper function to get image dimensions from buffer
+function getImageDimensions(buffer: Uint8Array, mimeType: string): { width: number; height: number } | null {
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+
+  if (mimeType === "image/jpeg") {
+    // JPEG dimensions are in various marker segments (0xFFC0, 0xFFC1, 0xFFC2)
+    let i = 2;
+    while (i < buffer.length - 8) {
+      if (buffer[i] === 0xFF && buffer[i + 1] >= 0xC0 && buffer[i + 1] <= 0xC3) {
+        const height = view.getUint16(i + 5);
+        const width = view.getUint16(i + 7);
+        return { width, height };
+      }
+      i += 2 + view.getUint16(i + 2);
+    }
+  } else if (mimeType === "image/png") {
+    // PNG IHDR chunk starts at byte 8, dimensions at 16-23
+    if (buffer.length >= 24) {
+      const width = view.getUint32(16);
+      const height = view.getUint32(20);
+      return { width, height };
+    }
+  } else if (mimeType === "image/gif") {
+    // GIF dimensions are at bytes 6-9
+    if (buffer.length >= 10) {
+      const width = view.getUint16(6, true); // little endian
+      const height = view.getUint16(8, true);
+      return { width, height };
+    }
+  } else if (mimeType === "image/webp") {
+    // WebP: Check for VP8/VP8L/VP8X
+    if (buffer.length > 30 && String.fromCharCode(...buffer.slice(12, 16)) === 'VP8 ') {
+      const width = view.getUint16(26, true) & 0x3FFF;
+      const height = view.getUint16(28, true) & 0x3FFF;
+      return { width, height };
+    }
+  }
 
   return null;
 }
 
 export async function uploadImage(formData: FormData) {
   const file = formData.get("file") as File;
-  
+
   if (!file || file.size === 0) return { error: "No file uploaded" };
 
   // FIX: Limit file size on the server side (e.g., 5MB)
@@ -41,6 +82,19 @@ export async function uploadImage(formData: FormData) {
   if (!realMimeType || !allowedTypes.includes(realMimeType)) {
       return { error: "Invalid file type. Only JPG, PNG, GIF, and WebP are allowed." };
   }
+
+  // FIX: Validate image dimensions (max 4096x4096 to prevent performance issues)
+  const dimensions = getImageDimensions(buffer, realMimeType);
+  if (dimensions) {
+    const MAX_DIMENSION = 4096;
+    if (dimensions.width > MAX_DIMENSION || dimensions.height > MAX_DIMENSION) {
+      return { error: `Image too large. Maximum allowed size is ${MAX_DIMENSION}x${MAX_DIMENSION} pixels.` };
+    }
+    if (dimensions.width === 0 || dimensions.height === 0) {
+      return { error: "Invalid image dimensions." };
+    }
+  }
+
   
   // Robust Path Construction
   const uploadDir = path.join(process.cwd(), "public", "uploads");

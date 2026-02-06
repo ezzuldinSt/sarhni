@@ -85,6 +85,20 @@ export async function sendConfession(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error("Confession Error:", error);
-    return { error: "Failed to send confession." };
+
+    // Provide specific error messages based on error type
+    if (error instanceof Error) {
+      if (error.message.includes("Unique constraint")) {
+        return { error: "Something went wrong. Please try again." };
+      }
+      if (error.message.includes("Foreign key constraint")) {
+        return { error: "Unable to send message. User may have been deleted." };
+      }
+      if (error.message.includes("database") || error.message.includes("connection")) {
+        return { error: "Service temporarily unavailable. Please try again." };
+      }
+    }
+
+    return { error: "Failed to send confession. Please try again later." };
   }
 }

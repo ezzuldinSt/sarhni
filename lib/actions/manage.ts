@@ -132,6 +132,8 @@ export async function fetchConfessions(userId: string, offset: number = 0) {
     return confessions;
   } catch (error) {
     console.error("Error fetching confessions:", error);
+    // Return empty array to prevent infinite loop, but the error is logged
+    // This is a reasonable fallback for infinite scroll - just stop loading
     return [];
   }
 }

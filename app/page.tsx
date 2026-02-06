@@ -75,7 +75,7 @@ export default async function Home() {
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="flex flex-col items-center text-center space-y-4 p-6 rounded-2xl bg-leather-800/20 border border-leather-600/10 hover:border-leather-pop/30 transition-colors">
-      <div className="p-4 rounded-full bg-leather-800 text-leather-pop mb-2">
+      <div className="p-4 rounded-full bg-leather-800 text-leather-pop mb-2" aria-hidden="true">
         {icon}
       </div>
       <h3 className="text-xl font-bold text-leather-accent">{title}</h3>
