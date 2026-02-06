@@ -1,31 +1,37 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Define protected and public routes
   const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname.startsWith("/owner");
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
-  // 2. Check for session token
-  // NextAuth v5 (Beta) uses 'authjs.session-token'
-  // Production (HTTPS) often uses '__Secure-authjs.session-token'
-  const token = 
-    request.cookies.get("authjs.session-token")?.value || 
-    request.cookies.get("__Secure-authjs.session-token")?.value ||
-    request.cookies.get("next-auth.session-token")?.value; // Fallback for older versions
+  // 2. Validate session using NextAuth's auth() function
+  // This properly validates JWT signature, expiry, and returns null for invalid sessions
+  const session = await auth();
+
+  // Check if user is banned (session exists but user is undefined due to ban)
+  const isBanned = session && !session.user;
 
   // 3. Logic: Redirect Unauthenticated Users
-  if (isProtected && !token) {
+  if (isProtected && !session) {
     const loginUrl = new URL("/login", request.url);
-    // Optional: Add ?callbackUrl= to redirect them back after login
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
+  // Redirect banned users to login with error
+  if (isProtected && isBanned) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("error", "banned");
+    return NextResponse.redirect(loginUrl);
+  }
+
   // 4. Logic: Redirect Authenticated Users (Guest Only Pages)
-  if (isAuthPage && token) {
+  if (isAuthPage && session && !isBanned) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
