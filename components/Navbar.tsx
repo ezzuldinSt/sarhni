@@ -25,9 +25,11 @@ export default async function Navbar() {
               <Link href="/dashboard" className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
                 Dashboard
               </Link>
-              <Link href={`/u/${session.user.name}`} className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
-                My Profile
-              </Link>
+              {session.user.name && (
+                <Link href={`/u/${session.user.name}`} className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
+                  My Profile
+                </Link>
+              )}
               <Link href="/dashboard/settings" className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
                 Settings
               </Link>

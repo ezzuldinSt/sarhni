@@ -129,13 +129,15 @@ export default function MobileMenu({ session }: { session: any }) {
                       >
                         <LayoutDashboard size={20} /> Dashboard
                       </Link>
-                      <Link 
-                        href={`/u/${session.user.name}`} 
-                        onClick={toggleOpen}
-                        className={`flex items-center gap-4 ${pathname.startsWith('/u/') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
-                      >
-                        <User size={20} /> My Profile
-                      </Link>
+                      {session.user.name && (
+                        <Link
+                          href={`/u/${session.user.name}`}
+                          onClick={toggleOpen}
+                          className={`flex items-center gap-4 ${pathname.startsWith('/u/') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                        >
+                          <User size={20} /> My Profile
+                        </Link>
+                      )}
                       <Link 
                         href="/dashboard/settings" 
                         onClick={toggleOpen}
