@@ -153,7 +153,7 @@ export default function MobileMenu({ session }: { session: any }) {
                       {(session?.user?.role === "ADMIN" || session?.user?.role === "OWNER") && (
                         <>
                           <div className="h-px bg-leather-600/50 my-2" />
-                          <div className="text-xs font-bold text-leather-500 uppercase tracking-wider mb-3">Admin</div>
+                          <div className="text-xs font-bold text-leather-100 uppercase tracking-wider mb-3">Admin</div>
                           <Link
                             href="/admin/reports"
                             onClick={toggleOpen}
@@ -206,7 +206,7 @@ export default function MobileMenu({ session }: { session: any }) {
                 </nav>
                 
                 <div className="mt-auto text-center">
-                   <p className="text-xs text-leather-500">Sarhni © 2026</p>
+                   <p className="text-xs text-leather-100">Sarhni © 2026</p>
                 </div>
               </motion.div>
             </>

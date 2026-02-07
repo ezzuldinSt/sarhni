@@ -23,7 +23,7 @@ const illustrations = {
       <rect x="40" y="60" width="120" height="100" rx="8" className="stroke-leather-600" strokeWidth="2" fill="none"/>
       <path d="M40 80 L100 120 L160 80" className="stroke-leather-600" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="150" cy="50" r="20" className="fill-leather-600/20" />
-      <path d="M145 45 L155 55 M155 45 L145 55" className="stroke-leather-500" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M145 45 L155 55 M155 45 L145 55" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   search: (
@@ -39,7 +39,7 @@ const illustrations = {
     <svg viewBox="0 0 200 200" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M40 100 L70 130 L160 50" className="stroke-leather-600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
       <circle cx="100" cy="50" r="20" className="fill-leather-600/10"/>
-      <path d="M95 45 L105 55 M105 45 L95 55" className="stroke-leather-500" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M95 45 L105 55 M105 45 L95 55" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   ghost: (
@@ -79,7 +79,7 @@ export function EmptyState({
       )}
       {Icon && !illustration && (
         <div className="w-16 h-16 bg-leather-800 rounded-full flex items-center justify-center mb-4">
-          <Icon size={32} className="text-leather-500" />
+          <Icon size={32} className="text-leather-100" />
         </div>
       )}
       {emoji && !Icon && !illustration && (
@@ -92,7 +92,7 @@ export function EmptyState({
       <h3 className="text-xl font-bold text-leather-accent mb-2">{title}</h3>
 
       {/* Description */}
-      <p className="text-leather-500 max-w-xs mx-auto mb-6">{description}</p>
+      <p className="text-leather-accent max-w-xs mx-auto mb-6">{description}</p>
 
       {/* Actions */}
       {(action || secondaryAction) && (
@@ -136,15 +136,15 @@ export function EmptySearchResults({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
       <svg viewBox="0 0 200 200" className="w-20 h-20 mb-3 opacity-40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="80" cy="80" r="40" className="stroke-leather-500" strokeWidth="2" fill="none"/>
-        <path d="M110 110 L150 150" className="stroke-leather-500" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M65 70 L70 75 M70 70 L65 75" className="stroke-leather-500" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M95 85 L100 90 M100 85 L95 90" className="stroke-leather-500" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="80" cy="80" r="40" className="stroke-leather-100" strokeWidth="2" fill="none"/>
+        <path d="M110 110 L150 150" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M65 70 L70 75 M70 70 L65 75" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M95 85 L100 90 M100 85 L95 90" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
       </svg>
-      <p className="text-sm text-leather-500">
+      <p className="text-sm text-leather-100">
         No souls found matching <span className="text-leather-accent font-medium">"{query}"</span>
       </p>
-      <p className="text-xs text-leather-600 mt-1">Try a different search term</p>
+      <p className="text-xs text-leather-accent mt-1">Try a different search term</p>
     </div>
   );
 }

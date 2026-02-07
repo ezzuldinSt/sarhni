@@ -36,7 +36,7 @@ export default function ShareLinkCard({ username }: { username: string }) {
         </p>
 
         <div className="flex items-center gap-2 bg-leather-950/50 p-2 rounded-xl border border-leather-600/50">
-          <code className="flex-1 text-sm text-leather-500 truncate px-2 font-mono">
+          <code className="flex-1 text-sm text-leather-100 truncate px-2 font-mono">
              {link}
           </code>
           <button 

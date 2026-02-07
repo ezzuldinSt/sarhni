@@ -12,7 +12,7 @@ export default async function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* LOGO */}
-        <Link href="/" className="font-bold text-2xl text-leather-pop tracking-tight hover:opacity-80 transition-opacity">
+        <Link href="/" className="font-bold text-2xl text-leather-pop tracking-tight hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 rounded">
           Sarhni
         </Link>
 
@@ -22,15 +22,15 @@ export default async function Navbar() {
           
           {session?.user ? (
             <>
-              <Link href="/dashboard" className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
+              <Link href="/dashboard" className="text-sm font-bold text-leather-accent hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 rounded px-1">
                 Dashboard
               </Link>
               {session.user.name && (
-                <Link href={`/u/${session.user.name}`} className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
+                <Link href={`/u/${session.user.name}`} className="text-sm font-bold text-leather-accent hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 rounded px-1">
                   My Profile
                 </Link>
               )}
-              <Link href="/dashboard/settings" className="text-sm font-bold text-leather-accent hover:text-white transition-colors">
+              <Link href="/dashboard/settings" className="text-sm font-bold text-leather-accent hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 rounded px-1">
                 Settings
               </Link>
               <form action={async () => {
@@ -49,7 +49,7 @@ export default async function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
-              <Link href="/login" className="text-sm font-bold text-leather-accent hover:text-white">
+              <Link href="/login" className="text-sm font-bold text-leather-accent hover:text-white focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 rounded px-1">
                 Login
               </Link>
               <Link href="/register">

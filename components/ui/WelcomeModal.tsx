@@ -123,12 +123,12 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-modal-backdrop"
             aria-hidden="true"
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -139,7 +139,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
               {/* Close button */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors z-10"
+                className="absolute top-4 right-4 text-leather-100 hover:text-leather-accent transition-colors z-10"
                 aria-label="Close welcome tour"
               >
                 <X size={24} />
@@ -158,7 +158,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
               {/* Content */}
               <div className="p-8 text-center">
                 {/* Step indicator */}
-                <div className="text-sm text-leather-500 mb-4">
+                <div className="text-sm text-leather-100 mb-4">
                   Step {currentStep + 1} of {steps.length}
                 </div>
 
@@ -183,7 +183,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                     </h2>
 
                     {/* Description */}
-                    <p className="text-leather-500 mb-8 leading-relaxed">
+                    <p className="text-leather-100 mb-8 leading-relaxed">
                       {step.description}
                     </p>
 
@@ -206,7 +206,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                   <button
                     onClick={handlePrevious}
                     disabled={currentStep === 0}
-                    className="px-4 py-2 text-sm font-bold text-leather-500 hover:text-leather-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm font-bold text-leather-100 hover:text-leather-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>

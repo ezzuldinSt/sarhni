@@ -12,7 +12,7 @@ export default function RegisterPage() {
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
       <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-leather-pop mb-8">Join the Club</h1>
+        <h1 className="text-page-title text-center text-leather-pop mb-8">Join the Club</h1>
         <Card>
           <form action={action} className="space-y-6">
             <div>

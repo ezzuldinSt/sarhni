@@ -149,10 +149,10 @@ function SettingsFormContent({ user }: { user: User }) {
       </Link>
 
       <Card>
-        <h2 className="text-2xl font-bold text-leather-accent mb-6">Settings</h2>
+        <h2 className="text-section-title text-leather-accent mb-6">Settings</h2>
         <form action={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center gap-4 mb-6">
-          <div className="relative w-32 h-32 rounded-full border-4 border-leather-pop overflow-hidden shadow-xl">
+          <div className="relative w-avatar-3xl h-avatar-3xl rounded-full border-4 border-leather-pop overflow-hidden shadow-xl">
             <Image
               src={preview}
               alt="Avatar Preview"

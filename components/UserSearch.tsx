@@ -97,7 +97,7 @@ export default function UserSearch({ className }: { className?: string }) {
                           onClick={() => handleSelect(user.username)}
                           className="w-full text-left px-4 py-3 hover:bg-leather-700 flex items-center gap-3 transition-colors group"
                       >
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-leather-900 shrink-0 border border-leather-600 group-hover:border-leather-pop">
+                          <div className="relative w-avatar-sm h-avatar-sm rounded-full overflow-hidden bg-leather-900 shrink-0 border border-leather-600 group-hover:border-leather-pop">
                               <Image
                                   src={user.image || "/placeholder-avatar.png"}
                                   alt={`${user.username}'s profile picture`}

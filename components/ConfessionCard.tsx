@@ -133,7 +133,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
         {/* --- Edited Indicator --- */}
         {confession.editedAt && !isEditing && (
           <div className="absolute top-4 left-4">
-            <span className="text-xs text-leather-600 italic">(edited)</span>
+            <span className="text-xs text-leather-accent italic">(edited)</span>
           </div>
         )}
 
@@ -149,7 +149,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                  className={`p-2 min-h-[44px] min-w-[44px] rounded-full shadow-lg transition-colors ${
                    isPinned
                      ? "bg-leather-pop text-leather-900 hover:bg-leather-popHover"
-                     : "bg-leather-800 text-leather-500 hover:text-leather-pop"
+                     : "bg-leather-800 text-leather-100 hover:text-leather-pop"
                  }`}
                  title={isPinned ? "Unpin" : "Pin to Top"}
                >
@@ -213,17 +213,17 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                  autoFocus
                  value={editText}
                  onChange={(e) => setEditText(e.target.value)}
-                 className="w-full bg-leather-900/80 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-leather-pop text-leather-accent placeholder-leather-600 min-h-20"
+                 className="w-full bg-leather-900/80 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-leather-pop text-leather-accent placeholder-leather-600 min-h-20"
                  placeholder="Edit your message..."
                  maxLength={500}
                />
-               <div className="flex items-center justify-between text-xs text-leather-600">
+               <div className="flex items-center justify-between text-xs text-leather-100">
                  <span>{editText.length}/500</span>
                  <div className="flex gap-2">
                    <button
                      type="button"
                      onClick={handleCancelEdit}
-                     className="flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-leather-800 text-leather-500"
+                     className="flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-leather-800 text-leather-100"
                      aria-label="Cancel edit"
                    >
                      <X size={14} />
@@ -250,10 +250,10 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
         {optimisticReply && (
           <div className="mt-2 bg-leather-900/50 p-4 rounded-xl border-l-4 border-leather-pop mb-4">
             <div className="flex items-center gap-2 mb-1">
-               <div className="w-5 h-5 rounded-full bg-leather-pop flex items-center justify-center text-[10px] text-leather-900 font-bold">
+               <div className="w-avatar-xs h-avatar-xs rounded-full bg-leather-pop flex items-center justify-center text-[10px] text-leather-900 font-bold">
                  {confession.receiver?.username?.[0].toUpperCase() || "Me"}
                </div>
-               <p className="text-xs text-leather-500 font-bold uppercase tracking-wide">
+               <p className="text-xs text-leather-100 font-bold uppercase tracking-wide">
                  Replied:
                </p>
             </div>
@@ -268,7 +268,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
               <button
                 onClick={() => setIsReplying(true)}
                 aria-label="Open reply form"
-                className="text-xs font-bold text-leather-500 hover:text-leather-pop flex items-center gap-2 transition-colors"
+                className="text-xs font-bold text-leather-100 hover:text-leather-pop flex items-center gap-2 transition-colors"
               >
                 <MessageCircle size={14} />
                 Reply to this message
@@ -277,7 +277,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
               <form onSubmit={onReplySubmit} className="flex gap-2 animate-in fade-in slide-in-from-top-2">
                 <input
                   autoFocus
-                  className="bg-leather-900/80 rounded-lg px-3 py-2 text-sm w-full outline-none focus:ring-1 focus:ring-leather-pop text-leather-accent placeholder-leather-600"
+                  className="bg-leather-900/80 rounded-xl p-3 text-sm w-full outline-none focus:ring-2 focus:ring-leather-pop text-leather-accent placeholder-leather-600"
                   placeholder="Type your comeback..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
@@ -292,7 +292,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                 <button
                    type="button"
                    onClick={() => setIsReplying(false)}
-                   className="text-xs text-leather-500 hover:text-red-400 px-2"
+                   className="text-xs text-leather-100 hover:text-red-400 px-2"
                 >
                   Cancel
                 </button>
@@ -303,14 +303,14 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
 
         {/* --- Footer (Sender Info) --- */}
         <div className="flex items-center gap-3 pt-4 mt-4 border-t border-leather-600/30">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${confession.isAnonymous ? 'bg-leather-600' : 'bg-leather-pop text-leather-900'}`}>
+          <div className={`w-avatar-sm h-avatar-sm rounded-full flex items-center justify-center text-xs font-bold ${confession.isAnonymous ? 'bg-leather-600' : 'bg-leather-pop text-leather-900'}`}>
             {confession.isAnonymous ? "?" : confession.sender?.username?.[0].toUpperCase()}
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold">
               {confession.isAnonymous ? "Secret Admirer" : confession.sender?.username}
             </span>
-            <span className="text-xs text-leather-500">{date}</span>
+            <span className="text-xs text-leather-100">{date}</span>
           </div>
         </div>
 

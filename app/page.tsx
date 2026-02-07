@@ -12,12 +12,12 @@ export default async function Home() {
       {/* --- HERO SECTION --- */}
       <section className="flex-1 flex flex-col items-center justify-center text-center space-y-8 py-20 px-4">
         <div className="space-y-4 max-w-3xl">
-          <h1 className="text-6xl md:text-8xl font-bold text-leather-pop tracking-tight drop-shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-hero md:text-hero-lg text-leather-pop tracking-tight drop-shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
             <GlitchText text="Sarhni" />
           </h1>
           <p className="text-xl md:text-2xl text-leather-accent/80 leading-relaxed max-w-2xl mx-auto">
             The cozy space for honest, anonymous confessions. <br />
-            <span className="text-leather-500 text-lg">Connect with friends without the mask.</span>
+            <span className="text-leather-100 text-lg">Connect with friends without the mask.</span>
           </p>
         </div>
 

@@ -73,12 +73,12 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-modal-backdrop"
             aria-hidden="true"
           />
 
           {/* Dialog */}
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -95,12 +95,12 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                   <h2 className="text-xl font-bold text-leather-accent mb-1">Report Message</h2>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors"
+                    className="absolute top-4 right-4 text-leather-100 hover:text-leather-accent transition-colors"
                     aria-label="Close dialog"
                   >
                     <X size={20} />
                   </button>
-                  <p className="text-sm text-leather-500">
+                  <p className="text-sm text-leather-100">
                     Help us keep the community safe by reporting inappropriate content.
                   </p>
                 </div>

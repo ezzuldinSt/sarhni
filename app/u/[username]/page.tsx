@@ -50,7 +50,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
       <Card className="mb-8 text-center py-10 relative overflow-hidden">
          <div className="absolute inset-0 bg-leather-texture opacity-5 z-0" />
          <div className="relative z-10">
-            <div className="w-32 h-32 mx-auto rounded-full border-4 border-leather-pop mb-4 overflow-hidden relative shadow-xl">
+            <div className="w-avatar-3xl h-avatar-3xl mx-auto rounded-full border-4 border-leather-pop mb-4 overflow-hidden relative shadow-xl">
                <Image
                  src={user.image || "/placeholder-avatar.png"}
                  alt={`Profile picture of ${user.username}`}
@@ -61,8 +61,8 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
                  unoptimized={user.image !== undefined}
                />
             </div>
-            <h1 className="text-3xl font-bold text-leather-accent mb-2">@{user.username}</h1>
-            {user.bio && <p className="text-leather-500 max-w-sm mx-auto italic">"{user.bio}"</p>}
+            <h1 className="text-page-title text-leather-accent mb-2">@{user.username}</h1>
+            {user.bio && <p className="text-leather-100 max-w-sm mx-auto italic">"{user.bio}"</p>}
          </div>
       </Card>
 
