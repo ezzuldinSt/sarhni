@@ -13,7 +13,14 @@ import { updateUserProfile, deleteProfileImage } from "@/lib/actions/user";
 import { toastSuccess, toastError, toastLoading, toast } from "@/lib/toast";
 import { Trash2, ArrowLeft } from "lucide-react";
 
-function SettingsFormContent({ user }: { user: any }) {
+interface User {
+  id: string;
+  username: string;
+  bio?: string | null;
+  image?: string | null;
+}
+
+function SettingsFormContent({ user }: { user: User }) {
   // If user has no image, use placeholder
   const [preview, setPreview] = useState(user?.image || "/placeholder-avatar.png");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -152,6 +159,7 @@ function SettingsFormContent({ user }: { user: any }) {
               fill
               sizes="128px"
               className="object-cover"
+              unoptimized={!preview.startsWith("/placeholder-avatar.png")}
             />
           </div>
           
@@ -228,10 +236,11 @@ function SettingsFormContent({ user }: { user: any }) {
 }
 
 // Wrapper component that provides the ConfirmDialog context
-export default function SettingsForm(props: { user: any }) {
+// NOTE: Since ConfirmDialogProvider is now in root layout, this wrapper is redundant
+// but kept for backwards compatibility
+export default function SettingsForm(props: { user: User | null }) {
+  if (!props.user) return null;
   return (
-    <ConfirmDialogProvider>
-      <SettingsFormContent {...props} />
-    </ConfirmDialogProvider>
+    <SettingsFormContent user={props.user} />
   );
 }

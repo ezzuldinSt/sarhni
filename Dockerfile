@@ -19,6 +19,10 @@ COPY . .
 # Generate Prisma Client (Now works because OpenSSL is in 'base')
 RUN npx prisma generate
 
+# Apply database migrations in production
+# This applies any pending migrations safely
+RUN npx prisma migrate deploy || true
+
 # Build the app
 RUN npm run build
 

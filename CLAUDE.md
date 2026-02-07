@@ -277,6 +277,69 @@ POSTGRES_DB=sarhni
 
 ---
 
+## Prisma Schema Changes (IMPORTANT)
+
+This project uses **Prisma migrations** for schema changes. Always follow this workflow when modifying `prisma/schema.prisma`:
+
+### When Making Schema Changes
+
+| Step | Command | Purpose |
+|------|---------|---------|
+| 1 | Edit `prisma/schema.prisma` | Make your schema changes |
+| 2 | `npm run prisma:migrate:dev -- --name description` | Create & apply migration locally |
+| 3 | Test your changes | Verify locally |
+| 4 | `git add prisma/migrations/` | Commit migration files |
+| 5 | `docker compose up -d --build` | Deploy (migrations auto-apply via `prisma migrate deploy` in Dockerfile) |
+
+### Available Prisma Scripts
+
+```bash
+npm run prisma:generate      # Regenerate Prisma client after schema changes
+npm run prisma:push          # Push schema changes to database (dev only, NO migration files)
+npm run prisma:migrate:dev   # Create and apply migration (RECOMMENDED for schema changes)
+npm run prisma:migrate:deploy # Apply pending migrations (production)
+```
+
+### Migration Workflow Example
+
+```bash
+# 1. Edit prisma/schema.prisma (add a field, model, etc.)
+
+# 2. Create migration with descriptive name
+npm run prisma:migrate:dev -- --name add_user_avatar_field
+
+# 3. This creates:
+#    - prisma/migrations/20240207XXXXXX_add_user_avatar_field/migration.sql
+#    - Applies changes to local database
+#    - Updates Prisma client
+
+# 4. Test locally, then commit
+git add prisma/migrations/ prisma/schema.prisma
+
+# 5. Deploy (migrations auto-apply in Dockerfile)
+docker compose up -d --build
+```
+
+### Why Migrations Instead of db push?
+
+| Feature | `db push` | `migrate deploy` |
+|---------|-----------|------------------|
+| Migration history | ❌ No | ✅ Yes |
+| Rollback support | ❌ No | ✅ Yes |
+| Destructive change warnings | ❌ No | ✅ Yes |
+| Production safe | ⚠️ Risky | ✅ Safe |
+
+**CRITICAL:** Always use `npm run prisma:migrate:dev` for schema changes. Never use `prisma:push` in production or when migration files exist.
+
+### Current Database State
+
+As of 2025-02-07, the database has these tables:
+- `User` - User accounts with authentication
+- `Confession` - Messages/replies
+- `Report` - Content moderation reports
+
+---
+
 ## Styling & Theme
 
 ### Custom "Leather" Theme Palette

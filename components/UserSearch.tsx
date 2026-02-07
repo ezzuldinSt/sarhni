@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, Loader2 } from "lucide-react";
 import { searchUsers } from "@/lib/actions/search";
+import { EmptySearchResults } from "./ui/EmptyState";
 
 // We accept className so we can style it differently for Mobile vs Desktop
 export default function UserSearch({ className }: { className?: string }) {
@@ -28,27 +29,42 @@ export default function UserSearch({ className }: { className?: string }) {
 
   // Debounce Search (Wait 300ms after typing stops before hitting DB)
   useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isCancelled = false;
+
+    const performSearch = async () => {
+      if (isCancelled) return;
+
       if (query.length >= 2) {
         setIsLoading(true);
         setIsOpen(true);
         const users = await searchUsers(query);
-        setResults(users);
-        setIsLoading(false);
+
+        if (!isCancelled) {
+          setResults(users);
+          setIsLoading(false);
+        }
       } else {
         setResults([]);
         setIsOpen(false);
       }
+    };
+
+    timeoutId = setTimeout(() => {
+      performSearch();
     }, 300);
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [query]);
 
   const handleSelect = (username: string) => {
     setQuery("");
     setIsOpen(false);
     router.push(`/u/${username}`);
-    // If inside mobile menu, we might want to close it, 
+    // If inside mobile menu, we might want to close it,
     // but the Link click in MobileMenu.tsx handles that separately.
   };
 
@@ -84,10 +100,11 @@ export default function UserSearch({ className }: { className?: string }) {
                           <div className="relative w-8 h-8 rounded-full overflow-hidden bg-leather-900 shrink-0 border border-leather-600 group-hover:border-leather-pop">
                               <Image
                                   src={user.image || "/placeholder-avatar.png"}
-                                  alt={user.username}
+                                  alt={`${user.username}'s profile picture`}
                                   fill
                                   sizes="32px"
                                   className="object-cover"
+                                  unoptimized={user.image !== undefined}
                               />
                           </div>
                           <span className="text-sm font-bold text-leather-accent group-hover:text-white truncate">
@@ -98,11 +115,11 @@ export default function UserSearch({ className }: { className?: string }) {
                 </div>
             </div>
         )}
-        
+
         {/* No Results State */}
         {isOpen && results.length === 0 && query.length >= 2 && !isLoading && (
-             <div className="absolute top-full mt-3 w-full bg-leather-800 border border-leather-600 rounded-2xl shadow-xl p-4 text-center z-50">
-                <p className="text-xs text-leather-500 italic">No one found in the void.</p>
+             <div className="absolute top-full mt-3 w-full bg-leather-800 border border-leather-600 rounded-2xl shadow-xl p-4 z-50">
+                <EmptySearchResults query={query} />
              </div>
         )}
     </div>
