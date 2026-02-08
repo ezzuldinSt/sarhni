@@ -30,6 +30,7 @@ const rateLimitMap = new Map<string, RateLimitRecord>();
 const WINDOW_SIZE = 60 * 1000; // 1 minute (in milliseconds)
 const MAX_REQUESTS = 5;        // Max 5 messages per minute
 const CLEANUP_INTERVAL = 60 * 1000; // Run cleanup at most once per minute
+const MAX_MAP_SIZE = 1000;     // OPTIMIZATION: Limit map size to prevent memory leak
 
 let lastCleanup = Date.now();
 
@@ -37,8 +38,21 @@ function cleanupExpired() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
   lastCleanup = now;
+
+  // OPTIMIZATION: Clean expired entries and enforce size limit
   for (const [ip, record] of rateLimitMap) {
     if (now > record.resetTime) {
+      rateLimitMap.delete(ip);
+    }
+  }
+
+  // If map is still too large, remove oldest entries
+  if (rateLimitMap.size > MAX_MAP_SIZE) {
+    const entries = Array.from(rateLimitMap.entries());
+    // Sort by resetTime (oldest first) and remove excess
+    entries.sort((a, b) => a[1].resetTime - b[1].resetTime);
+    const toRemove = entries.slice(0, rateLimitMap.size - MAX_MAP_SIZE);
+    for (const [ip] of toRemove) {
       rateLimitMap.delete(ip);
     }
   }
@@ -97,6 +111,7 @@ export function checkRateLimit(ip: string) {
 export function createRateLimiter(maxRequests: number, windowMs: number) {
   const map = new Map<string, RateLimitRecord>();
   let lastClean = Date.now();
+  const MAX_SIZE = 500; // OPTIMIZATION: Limit map size per limiter instance
 
   return function check(ip: string) {
     const now = Date.now();
@@ -104,6 +119,15 @@ export function createRateLimiter(maxRequests: number, windowMs: number) {
       lastClean = now;
       for (const [key, rec] of map) {
         if (now > rec.resetTime) map.delete(key);
+      }
+      // OPTIMIZATION: Enforce size limit
+      if (map.size > MAX_SIZE) {
+        const entries = Array.from(map.entries());
+        entries.sort((a, b) => a[1].resetTime - b[1].resetTime);
+        const toRemove = entries.slice(0, map.size - MAX_SIZE);
+        for (const [key] of toRemove) {
+          map.delete(key);
+        }
       }
     }
 
