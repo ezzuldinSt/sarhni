@@ -12,6 +12,7 @@ This document summarizes all code changes made to migrate Sarhni from Docker-bas
 | `prisma/schema.prisma` | Updated binaryTargets, added DIRECT_URL documentation | Vercel handles binary automatically |
 | `lib/actions/confess.ts` | Added Vercel IP header support | `x-vercel-forwarded-for` header |
 | `lib/actions/search.ts` | Added Vercel IP header support | `x-vercel-forwarded-for` header |
+| `lib/actions/auth.ts` | **CRITICAL BUG FIX:** Added Vercel IP header to registerUser/loginUser | Fixed global rate limit bug affecting all users |
 | `lib/rate-limit.ts` | Added serverless documentation, new utility | Documented limitations, added `getRateLimitStatus()` |
 | `lib/actions/user.ts` | Updated deleteProfileImage to use Vercel Blob | Replaced filesystem operations with `del()` from `@vercel/blob` |
 | `.env.example` | Updated with .env.local documentation and Vercel-specific instructions | Clarified environment variable priority and usage |
@@ -208,6 +209,59 @@ BLOB_READ_WRITE_TOKEN=your_blob_token_here
 ```
 
 **Why:** Next.js automatically loads `.env.local` for local development. Using `vercel env pull .env.local` keeps your local environment in sync with Vercel without manual configuration.
+
+---
+
+### 7. lib/actions/auth.ts - Critical Bug Fix (Registration/Login Rate Limiting)
+
+**Issue Found (Feb 8, 2026):**
+After Vercel migration, registration and login were failing for all users due to rate limiting being applied globally instead of per-IP.
+
+**Root Cause:**
+The `registerUser()` and `loginUser()` functions only checked `x-real-ip` header for IP detection. On Vercel, this header is not set; instead, `x-vercel-forwarded-for` is used. This caused all users to be assigned IP = "unknown", sharing the same rate limit bucket.
+
+**Before:**
+```typescript
+// registerUser (line 24-25)
+const headerList = await headers();
+let ip = headerList.get("x-real-ip") || "unknown";
+
+// loginUser (lines 70-81)
+const headerList = await headers();
+let ip = headerList.get("x-real-ip");
+if (!ip) {
+  const forwarded = headerList.get("x-forwarded-for");
+  if (forwarded) {
+    ip = forwarded.split(",")[0].trim();
+  }
+}
+ip = ip || "unknown";
+```
+
+**After:**
+```typescript
+// registerUser - Now supports Vercel header
+const headerList = await headers();
+let ip = headerList.get("x-vercel-forwarded-for") ||  // Vercel's trusted header
+         headerList.get("x-real-ip") ||                  // Docker/nginx standard
+         "unknown";
+
+// loginUser - Updated with Vercel support
+const headerList = await headers();
+let ip = headerList.get("x-vercel-forwarded-for") ||  // Vercel's trusted header
+         headerList.get("x-real-ip");                  // Docker/nginx standard
+if (!ip) {
+  const forwarded = headerList.get("x-forwarded-for");
+  if (forwarded) {
+    ip = forwarded.split(",")[0].trim();
+  }
+}
+ip = ip || "unknown";
+```
+
+**Why:** This ensures rate limiting works correctly on Vercel by detecting real user IPs instead of lumping everyone into the "unknown" bucket. The fix maintains backward compatibility with Docker/nginx deployments.
+
+**Impact:** After this fix, each user gets their own rate limit bucket (3 registrations/hour, 5 logins/15min) instead of sharing a global bucket.
 
 ---
 

@@ -20,9 +20,11 @@ const registerSchema = z.object({
 });
 
 export async function registerUser(prevState: any, formData: FormData) {
-  // Get IP address for rate limiting
+  // Get IP address for rate limiting (Vercel-compatible)
   const headerList = await headers();
-  let ip = headerList.get("x-real-ip") || "unknown";
+  let ip = headerList.get("x-vercel-forwarded-for") ||  // Vercel's trusted header
+           headerList.get("x-real-ip") ||                  // Docker/nginx standard
+           "unknown";
 
   // Check rate limit
   const rateLimit = checkRegistrationRateLimit(ip);
@@ -67,9 +69,10 @@ const loginSchema = z.object({
 });
 
 export async function loginUser(prevState: any, formData: FormData) {
-  // Get IP address for rate limiting
+  // Get IP address for rate limiting (Vercel-compatible)
   const headerList = await headers();
-  let ip = headerList.get("x-real-ip");
+  let ip = headerList.get("x-vercel-forwarded-for") ||  // Vercel's trusted header
+           headerList.get("x-real-ip");                  // Docker/nginx standard
 
   if (!ip) {
     const forwarded = headerList.get("x-forwarded-for");
