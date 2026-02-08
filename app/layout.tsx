@@ -16,6 +16,10 @@ const varela = Varela_Round({
 export const metadata: Metadata = {
   title: "Sarhni - Confess Freely",
   description: "A cozy place for honest words.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   openGraph: {
     title: "Sarhni - Confess Freely",
     description: "The cozy space for honest, anonymous confessions.",
