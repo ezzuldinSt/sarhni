@@ -11,9 +11,11 @@ services:
       # We just pass the variable directly.
       # Docker loads it from the .env file on the host.
       - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DATABASE_URL}  # Same as DATABASE_URL for Docker (no PgBouncer)
       - NEXT_PUBLIC_URL=${NEXT_PUBLIC_URL}
       - AUTH_SECRET=${AUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - AUTH_TRUST_HOST=${AUTH_TRUST_HOST:-true}
       - OWNER_USERNAME=${OWNER_USERNAME}
     volumes:
       - ./public/uploads:/app/public/uploads
