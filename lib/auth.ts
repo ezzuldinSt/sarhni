@@ -83,9 +83,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.lastChecked = Date.now();
           }
         }
-        // Periodic refresh to catch bans and role changes (every 5 minutes)
+        // OPTIMIZATION: Periodic refresh to catch bans and role changes
+        // Extended from 5 minutes to 15 minutes to reduce database queries
+        // Critical changes (bans/role changes) still refresh via "update" trigger
         const lastChecked = (token.lastChecked as number) || 0;
-        if (token.sub && Date.now() - lastChecked > 5 * 60 * 1000) {
+        const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes (was 5 minutes)
+
+        if (token.sub && Date.now() - lastChecked > REFRESH_INTERVAL) {
           const freshUser = await prisma.user.findUnique({
             where: { id: token.sub },
             select: { role: true, isBanned: true, username: true, image: true },

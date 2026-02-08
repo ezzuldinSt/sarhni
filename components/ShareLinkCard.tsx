@@ -1,11 +1,15 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Copy, Check, Share2, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { toastSuccess } from "@/lib/toast";
 import Link from "next/link";
 
-export default function ShareLinkCard({ username }: { username: string }) {
+interface ShareLinkCardProps {
+  username: string;
+}
+
+function ShareLinkCardInner({ username }: ShareLinkCardProps) {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState("");
 
@@ -86,3 +90,12 @@ export default function ShareLinkCard({ username }: { username: string }) {
     </Card>
   );
 }
+
+// Memoize to prevent unnecessary re-renders when username doesn't change
+const ShareLinkCard = memo(ShareLinkCardInner, (prev, next) => {
+  return prev.username === next.username;
+});
+
+ShareLinkCard.displayName = "ShareLinkCard";
+
+export default ShareLinkCard;

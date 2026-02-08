@@ -16,7 +16,18 @@ export async function getAllUsers(query: string = "") {
   const role = await getCurrentRole();
   if (role !== "ADMIN" && role !== "OWNER") return [];
 
-  return await getCachedAdminUsers(query);
+  // OPTIMIZATION: Handle new paginated return format
+  const result = await getCachedAdminUsers(query);
+  // Backward compatibility: return just users array for existing usage
+  return Array.isArray(result) ? result : result.users;
+}
+
+// OPTIMIZATION: Paginated admin users with total count
+export async function getPaginatedUsers(query: string = "", limit: number = 20, offset: number = 0) {
+  const role = await getCurrentRole();
+  if (role !== "ADMIN" && role !== "OWNER") return { users: [], total: 0 };
+
+  return await getCachedAdminUsers(query, limit, offset);
 }
 
 // --- 2. BAN HAMMER ---

@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
 import { Button } from "./Button";
 
 interface EmptyStateProps {
@@ -60,7 +61,8 @@ const illustrations = {
   ),
 };
 
-export function EmptyState({
+// Memoize EmptyState to prevent unnecessary re-renders
+export const EmptyState = memo(function EmptyState({
   icon: Icon,
   emoji,
   title,
@@ -69,6 +71,15 @@ export function EmptyState({
   secondaryAction,
   illustration,
 }: EmptyStateProps) {
+  // Stabilize action callbacks with useCallback to prevent memo busting
+  const handleActionClick = useCallback(() => {
+    action?.onClick();
+  }, [action]);
+
+  const handleSecondaryActionClick = useCallback(() => {
+    secondaryAction?.onClick();
+  }, [secondaryAction]);
+
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       {/* Illustration or Icon */}
@@ -98,13 +109,13 @@ export function EmptyState({
       {(action || secondaryAction) && (
         <div className="flex flex-col sm:flex-row gap-3">
           {action && (
-            <Button onClick={action.onClick} size="sm">
+            <Button onClick={handleActionClick} size="sm">
               {action.label}
             </Button>
           )}
           {secondaryAction && (
             <button
-              onClick={secondaryAction.onClick}
+              onClick={handleSecondaryActionClick}
               className="px-4 py-2 text-sm text-leather-pop hover:text-white transition-colors font-bold"
             >
               {secondaryAction.label}
@@ -114,10 +125,16 @@ export function EmptyState({
       )}
     </div>
   );
-}
+});
 
 // Pre-configured empty states for common use cases
-export function EmptyInbox({ isOwner, onShare }: { isOwner: boolean; onShare?: () => void }) {
+// Memoize to prevent re-renders when props don't change
+export const EmptyInbox = memo(function EmptyInbox({ isOwner, onShare }: { isOwner: boolean; onShare?: () => void }) {
+  // Memoize the action object to prevent memo busting
+  const action = useMemo(() => {
+    return isOwner ? { label: "Share Profile", onClick: onShare || (() => {}) } : undefined;
+  }, [isOwner, onShare]);
+
   return (
     <EmptyState
       illustration="inbox"
@@ -127,12 +144,13 @@ export function EmptyInbox({ isOwner, onShare }: { isOwner: boolean; onShare?: (
           ? "Share your profile link to start receiving anonymous messages."
           : "Be the first to break the silence. Send a confession now!"
       }
-      action={isOwner ? { label: "Share Profile", onClick: onShare || (() => {}) } : undefined}
+      action={action}
     />
   );
-}
+});
 
-export function EmptySearchResults({ query }: { query: string }) {
+// Memoize EmptySearchResults to prevent re-renders on unrelated changes
+export const EmptySearchResults = memo(function EmptySearchResults({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
       <svg viewBox="0 0 200 200" className="w-20 h-20 mb-3 opacity-40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -147,9 +165,10 @@ export function EmptySearchResults({ query }: { query: string }) {
       <p className="text-xs text-leather-accent mt-1">Try a different search term</p>
     </div>
   );
-}
+});
 
-export function EmptySentMessages() {
+// Memoize - no props so never re-renders
+export const EmptySentMessages = memo(function EmptySentMessages() {
   return (
     <EmptyState
       illustration="sent"
@@ -157,9 +176,10 @@ export function EmptySentMessages() {
       description="Messages you send will appear here. Start sharing your thoughts with others!"
     />
   );
-}
+});
 
-export function EmptyProfile() {
+// Memoize - no props so never re-renders
+export const EmptyProfile = memo(function EmptyProfile() {
   return (
     <EmptyState
       illustration="ghost"
@@ -167,4 +187,4 @@ export function EmptyProfile() {
       description="No confessions yet. Be the first to send an anonymous message!"
     />
   );
-}
+});

@@ -54,29 +54,43 @@ export const getCachedUserMeta = unstable_cache(
   { revalidate: 300, tags: ["user-profiles"] }
 );
 
+// OPTIMIZATION: Support pagination for admin users to reduce payload size
 export const getCachedAdminUsers = unstable_cache(
-  async (query: string = "") => {
-    return prisma.user.findMany({
-      where: {
-        username: { contains: query, mode: "insensitive" },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      select: { id: true, username: true, role: true, isBanned: true, createdAt: true },
-    });
+  async (query: string = "", limit: number = 50, offset: number = 0) => {
+    const [users, count] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          username: { contains: query, mode: "insensitive" },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+        select: { id: true, username: true, role: true, isBanned: true, createdAt: true },
+      }),
+      prisma.user.count({
+        where: {
+          username: { contains: query, mode: "insensitive" },
+        },
+      })
+    ]);
+
+    return { users, total: count };
   },
   ["admin-users"],
   { revalidate: 30, tags: ["admin-users"] }
 );
 
 export const getCachedSearchResults = unstable_cache(
-  async (query: string) => {
+  async (query: string, signal?: AbortSignal) => {
     // Sanitize query to prevent cache key issues
     const sanitizedQuery = query.trim().toLowerCase();
 
     if (!sanitizedQuery || sanitizedQuery.length < 2) {
       return [];
     }
+
+    // Check if request was aborted
+    if (signal?.aborted) return [];
 
     try {
       const results = await prisma.user.findMany({
@@ -87,10 +101,14 @@ export const getCachedSearchResults = unstable_cache(
         select: { username: true, image: true },
         take: 5,
         orderBy: { username: 'asc' }, // Consistent ordering for better cache hits
+        // @ts-ignore - Prisma supports abort signal but types may not include it
+        abortSignal: signal
       });
 
       return results;
     } catch (error) {
+      // Don't log error if request was aborted
+      if (signal?.aborted) return [];
       console.error(`Search cache error for query "${sanitizedQuery}":`, error);
       return [];
     }

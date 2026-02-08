@@ -29,20 +29,35 @@ export default function UserSearch({ className }: { className?: string }) {
 
   // Debounce Search (Wait 300ms after typing stops before hitting DB)
   // OPTIMIZATION: Use requestId to prevent race conditions from parallel searches
+  // OPTIMIZATION: Add AbortController for cleanup on unmount
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     let currentRequestId = 0;
+    let abortController: AbortController | null = null;
 
     const performSearch = async (requestId: number) => {
       if (query.length >= 2) {
         setIsLoading(true);
         setIsOpen(true);
-        const users = await searchUsers(query);
 
-        // Only update state if this is still the latest request
-        if (requestId === currentRequestId) {
-          setResults(users);
-          setIsLoading(false);
+        // Create abort controller for this request
+        abortController = new AbortController();
+        const signal = abortController.signal;
+
+        try {
+          const users = await searchUsers(query, signal);
+
+          // Only update state if this is still the latest request and wasn't aborted
+          if (requestId === currentRequestId && !signal.aborted) {
+            setResults(users);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          // Don't update state if request was aborted
+          if (!signal.aborted) {
+            console.error("Search error:", error);
+            setIsLoading(false);
+          }
         }
       } else {
         setResults([]);
@@ -58,6 +73,7 @@ export default function UserSearch({ className }: { className?: string }) {
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
+      if (abortController) abortController.abort();
     };
   }, [query]);
 

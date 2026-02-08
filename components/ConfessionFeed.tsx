@@ -24,6 +24,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   const offsetRef = useRef(initialConfessions.length);
   const existingIdsRef = useRef(new Set(initialConfessions.map(c => c.id)));
   const [isMounted, setIsMounted] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fix hydration issue by ensuring window is accessed only after mount
   useEffect(() => {
@@ -31,6 +32,15 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   }, []);
 
   const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Cancel any in-flight requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Sync state when the server revalidates (e.g., after sending a message)
   useEffect(() => {
@@ -42,11 +52,26 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
+
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const newConfessions = await fetchConfessions(userId, offsetRef.current);
+      const newConfessions = await fetchConfessions(userId, offsetRef.current, abortController.signal);
+
+      // Check if request was aborted
+      if (abortController.signal.aborted) {
+        return;
+      }
 
       if (newConfessions.length === 0) {
         setHasMore(false);
@@ -60,11 +85,18 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
         }
       }
     } catch (err) {
+      // Don't show error if request was aborted (component unmounted)
+      if (abortController.signal.aborted) {
+        return;
+      }
       setError("Failed to load more messages. Please try again.");
       setHasMore(false);
+    } finally {
+      // Only clear loading if this wasn't aborted
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
     }
-
-    setIsLoading(false);
   }, [hasMore, isLoading, userId]);
 
   useEffect(() => {

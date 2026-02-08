@@ -6,8 +6,11 @@ import { getCachedSearchResults } from "@/lib/cache";
 // 20 searches per minute — generous for typing, tight enough to block scraping
 const checkSearchLimit = createRateLimiter(20, 60 * 1000);
 
-export async function searchUsers(query: string) {
+export async function searchUsers(query: string, signal?: AbortSignal) {
   if (!query || query.length < 2) return [];
+
+  // Check if request was aborted
+  if (signal?.aborted) return [];
 
   // Rate limit by IP (Vercel-compatible)
   const headerList = await headers();
@@ -22,8 +25,10 @@ export async function searchUsers(query: string) {
   }
 
   try {
-    return await getCachedSearchResults(query);
+    return await getCachedSearchResults(query, signal);
   } catch (error) {
+    // Don't log error if request was aborted
+    if (signal?.aborted) return [];
     console.error("Search error:", error);
     return [];
   }

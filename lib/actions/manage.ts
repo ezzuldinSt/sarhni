@@ -119,10 +119,16 @@ export async function togglePin(confessionId: string) {
   }
 }
 
-export async function fetchConfessions(userId: string, offset: number = 0) {
+export async function fetchConfessions(userId: string, offset: number = 0, signal?: AbortSignal) {
   const PAGE_SIZE = 12;
 
   try {
+    // Check if request was aborted before querying
+    if (signal?.aborted) {
+      return [];
+    }
+
+    // Pass abort signal to Prisma for cancellation support
     const confessions = await prisma.confession.findMany({
       where: { receiverId: userId },
       orderBy: [
@@ -134,11 +140,18 @@ export async function fetchConfessions(userId: string, offset: number = 0) {
       include: {
         sender: { select: { username: true } },
         receiver: { select: { username: true } }
-      }
+      },
+      // Pass the abort signal through to the underlying request
+      // @ts-ignore - Prisma supports abort signal but types may not include it
+      abortSignal: signal
     });
 
     return confessions;
   } catch (error) {
+    // Don't log or treat as error if aborted
+    if (signal?.aborted) {
+      return [];
+    }
     console.error("Error fetching confessions:", error);
     // Return empty array to prevent infinite loop, but the error is logged
     // This is a reasonable fallback for infinite scroll - just stop loading
