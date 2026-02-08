@@ -13,6 +13,8 @@ This document summarizes all code changes made to migrate Sarhni from Docker-bas
 | `lib/actions/confess.ts` | Added Vercel IP header support | `x-vercel-forwarded-for` header |
 | `lib/actions/search.ts` | Added Vercel IP header support | `x-vercel-forwarded-for` header |
 | `lib/rate-limit.ts` | Added serverless documentation, new utility | Documented limitations, added `getRateLimitStatus()` |
+| `lib/actions/user.ts` | Updated deleteProfileImage to use Vercel Blob | Replaced filesystem operations with `del()` from `@vercel/blob` |
+| `.env.example` | Updated with .env.local documentation and Vercel-specific instructions | Clarified environment variable priority and usage |
 
 ### Files Previously Modified (Earlier Session)
 
@@ -139,6 +141,73 @@ export function getRateLimitStatus(ip: string) {
 ```
 
 **Why:** In-memory rate limiting has limitations on serverless (stateless executions). Added documentation and utility for future improvements.
+
+---
+
+### 5. lib/actions/user.ts
+
+**Before (deleteProfileImage):**
+```typescript
+import fs from "node:fs/promises";
+import path from "node:path";
+
+// Delete file from filesystem
+try {
+  const filePath = path.join(process.cwd(), "public", "uploads", filename);
+  await fs.unlink(filePath);
+} catch (error) {
+  // Handle filesystem errors
+}
+```
+
+**After:**
+```typescript
+import { del } from "@vercel/blob";
+
+// Delete from Vercel Blob Storage (if it's a Blob URL)
+if (user.image.includes('blob.vercel-storage.com')) {
+  try {
+    await del(user.image);
+  } catch (error) {
+    // Log but don't fail - blob might already be deleted
+    console.warn(`Failed to delete blob: ${error}`);
+  }
+}
+```
+
+**Why:** Vercel Blob Storage doesn't use the local filesystem. The `del()` function from `@vercel/blob` removes files from Vercel's CDN. The token is auto-detected from `BLOB_READ_WRITE_TOKEN` environment variable.
+
+---
+
+### 6. .env.example Updates
+
+**Before:**
+```bash
+# Copy this file to .env and fill in the values
+DATABASE_URL=postgresql://user:password@host:port/database
+DIRECT_URL=postgresql://user:password@host:port/database
+BLOB_READ_WRITE_TOKEN=your_blob_token_here
+```
+
+**After:**
+```bash
+# LOCAL DEVELOPMENT (Vercel):
+#   1. Run: vercel env pull .env.local
+#   2. This downloads all env vars from your Vercel project
+#   3. .env.local is gitignored and used by Next.js automatically
+
+# PRIORITY ORDER (Next.js loads in this order):
+#   1. .env.$(NODE_ENV).local (e.g., .env.production.local)
+#   2. .env.local (recommended for local development with Vercel)
+#   3. .env.$(NODE_ENV) (e.g., .env.production)
+#   4. .env (fallback, also used by Docker Compose)
+
+DATABASE_URL=postgresql://user:password@host:port/database
+DIRECT_URL=postgresql://user:password@host:port/database
+BLOB_READ_WRITE_TOKEN=your_blob_token_here
+```
+
+**Why:** Next.js automatically loads `.env.local` for local development. Using `vercel env pull .env.local` keeps your local environment in sync with Vercel without manual configuration.
 
 ---
 
