@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { put } from '@vercel/blob';
 import { randomUUID } from "node:crypto";
 
 // Helper function to detect real file type by inspecting "Magic Numbers"
@@ -99,15 +98,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Robust Path Construction
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-    try {
-      await fs.access(uploadDir);
-    } catch {
-      await fs.mkdir(uploadDir, { recursive: true });
-    }
-
     // Determine extension from the REAL mime type
     const extMap: Record<string, string> = {
       "image/jpeg": "jpg",
@@ -119,13 +109,14 @@ export async function POST(request: NextRequest) {
 
     // Generate a clean filename
     const fileName = `${randomUUID()}.${safeExt}`;
-    const filePath = path.join(uploadDir, fileName);
 
-    // Write the file
-    await fs.writeFile(filePath, buffer);
+    // Upload to Vercel Blob Storage (fixes Vercel deployment issues)
+    const blob = await put(fileName, file, {
+      access: 'public',
+    });
 
-    // Return the API route URL (not the static path)
-    return NextResponse.json({ success: true, url: `/api/uploads/${fileName}` });
+    // Return the Blob URL
+    return NextResponse.json({ success: true, url: blob.url });
 
   } catch (error) {
     console.error("Upload error:", error);
