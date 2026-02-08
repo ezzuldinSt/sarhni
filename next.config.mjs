@@ -1,7 +1,6 @@
 // next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	output: "standalone",
   compress: true,
   experimental: {
     serverActions: {
@@ -11,7 +10,8 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "http", hostname: "localhost" },
-      { protocol: "https", hostname: "sarhni.zhrworld.com" }
+      { protocol: "https", hostname: "sarhni.zhrworld.com" },
+      { protocol: "https", hostname: "**.blob.vercel-storage.com" }
     ]
   },
   async headers() {

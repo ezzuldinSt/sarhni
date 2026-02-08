@@ -31,21 +31,23 @@ export async function sendConfession(formData: FormData) {
 
   // 2. RATE LIMIT CHECK
   const headerList = await headers();
-  
-  // FIX: SECURITY - IP Spoofing Prevention
-  // We prefer 'x-real-ip' because standard proxies (Nginx) overwrite this with the direct connection IP,
-  // making it much harder for a client to spoof than 'x-forwarded-for'.
-  let ip = headerList.get("x-real-ip");
-  
+
+  // Vercel-compatible IP detection
+  // Priority order:
+  // 1. x-vercel-forwarded-for (Vercel's trusted header)
+  // 2. x-real-ip (Docker/nginx/proxy standard)
+  // 3. x-forwarded-for (standard proxy header, take first IP)
+  let ip = headerList.get("x-vercel-forwarded-for") ||
+           headerList.get("x-real-ip");
+
   if (!ip) {
       const forwarded = headerList.get("x-forwarded-for");
       if (forwarded) {
-          // If we must use forwarded-for, we take the first one. 
-          // NOTE: Ensure your Nginx config has "proxy_set_header X-Forwarded-For $remote_addr;"
+          // Take the first IP from the chain (original client)
           ip = forwarded.split(",")[0].trim();
       }
   }
-  
+
   // Fallback if no headers found (e.g., local dev)
   ip = ip || "unknown";
 
@@ -78,7 +80,7 @@ export async function sendConfession(formData: FormData) {
       },
     });
 
-    revalidateTag("user-profiles", "max");
+    revalidateTag("user-profiles", {});
     revalidatePath(`/u/${usernamePath}`, "page");
     revalidatePath("/dashboard", "page");
     

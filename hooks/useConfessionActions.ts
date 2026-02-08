@@ -24,10 +24,10 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
     const res = await deleteConfession(id);
     if (res?.error) {
       toastError(res.error);
-      setIsDeleting(false);
     } else {
       toastSuccess("Message deleted.");
     }
+    setIsDeleting(false);
   };
 
   const handlePin = async (id: string) => {

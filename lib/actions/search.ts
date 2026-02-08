@@ -9,9 +9,10 @@ const checkSearchLimit = createRateLimiter(20, 60 * 1000);
 export async function searchUsers(query: string) {
   if (!query || query.length < 2) return [];
 
-  // Rate limit by IP
+  // Rate limit by IP (Vercel-compatible)
   const headerList = await headers();
-  const ip = headerList.get("x-real-ip")
+  const ip = headerList.get("x-vercel-forwarded-for")
+    || headerList.get("x-real-ip")
     || headerList.get("x-forwarded-for")?.split(",")[0].trim()
     || "unknown";
 

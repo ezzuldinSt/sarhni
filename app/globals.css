@@ -6,3 +6,46 @@
   background-color: #FFB74D;
   color: #2C1A1D;
 }
+
+@layer base {
+  /* Improved focus styles for accessibility */
+  *:focus-visible {
+    outline: 2px solid #FFB74D;
+    outline-offset: 2px;
+  }
+
+  /* Smooth transitions for interactive elements */
+  button, a, input, textarea, select {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer utilities {
+  /* Text animation utilities */
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    background: rgba(62, 39, 35, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Gradient text utility */
+  .gradient-text {
+    @apply bg-gradient-to-r from-leather-pop to-leather-100 bg-clip-text text-transparent;
+  }
+}

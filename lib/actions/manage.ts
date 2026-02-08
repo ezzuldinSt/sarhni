@@ -5,57 +5,67 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { Prisma } from "@prisma/client";
 
 export async function deleteConfession(confessionId: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "You must be logged in." };
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "You must be logged in." };
 
-  // 1. Verify ownership before deleting
-  const confession = await prisma.confession.findUnique({
-    where: { id: confessionId },
-    select: { receiverId: true } 
-  });
+    // 1. Verify ownership before deleting
+    const confession = await prisma.confession.findUnique({
+      where: { id: confessionId },
+      select: { receiverId: true }
+    });
 
-  if (!confession) return { error: "Message not found." };
+    if (!confession) return { error: "Message not found." };
 
-  if (confession.receiverId !== session.user.id) {
-    return { error: "Unauthorized: You can't delete messages sent to others." };
+    if (confession.receiverId !== session.user.id) {
+      return { error: "Unauthorized: You can't delete messages sent to others." };
+    }
+
+    // 2. Delete
+    await prisma.confession.delete({
+      where: { id: confessionId },
+    });
+
+    // 3. Refresh caches
+    revalidateTag("user-profiles", {});
+    revalidatePath("/dashboard", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Delete confession error:", error);
+    return { error: "Failed to delete message. Please try again." };
   }
-
-  // 2. Delete
-  await prisma.confession.delete({
-    where: { id: confessionId },
-  });
-
-  // 3. Refresh caches
-  revalidateTag("user-profiles", "max");
-  revalidatePath("/dashboard", "page");
-  return { success: true };
 }
 
 export async function replyToConfession(confessionId: string, replyContent: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "Unauthorized" };
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Unauthorized" };
 
-  const confession = await prisma.confession.findUnique({
-    where: { id: confessionId },
-    select: { receiverId: true }
-  });
+    const confession = await prisma.confession.findUnique({
+      where: { id: confessionId },
+      select: { receiverId: true }
+    });
 
-  if (!confession || confession.receiverId !== session.user.id) {
-    return { error: "You can only reply to your own messages." };
-  }
-
-  await prisma.confession.update({
-    where: { id: confessionId },
-    data: {
-      reply: replyContent,
-      replyAt: new Date()
+    if (!confession || confession.receiverId !== session.user.id) {
+      return { error: "You can only reply to your own messages." };
     }
-  });
 
-  revalidateTag("user-profiles", "max");
-  revalidatePath("/dashboard", "page");
-  revalidatePath(`/u/${session.user.name}`, "page");
-  return { success: true };
+    await prisma.confession.update({
+      where: { id: confessionId },
+      data: {
+        reply: replyContent,
+        replyAt: new Date()
+      }
+    });
+
+    revalidateTag("user-profiles", {});
+    revalidatePath("/dashboard", "page");
+    revalidatePath(`/u/${session.user.name}`, "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Reply to confession error:", error);
+    return { error: "Failed to reply. Please try again." };
+  }
 }
 
 export async function togglePin(confessionId: string) {
@@ -98,7 +108,7 @@ export async function togglePin(confessionId: string) {
       return { isPinned: updated.isPinned, username: session.user.name };
     });
 
-    revalidateTag("user-profiles", "max");
+    revalidateTag("user-profiles", {});
     revalidatePath("/dashboard", "page");
     revalidatePath(`/u/${result.username}`, "page");
     return { success: true, isPinned: result.isPinned };
@@ -139,41 +149,46 @@ export async function fetchConfessions(userId: string, offset: number = 0) {
 }
 
 export async function editConfession(confessionId: string, newContent: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "You must be logged in." };
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "You must be logged in." };
 
-  // 1. Verify ownership and check time window
-  const confession = await prisma.confession.findUnique({
-    where: { id: confessionId },
-    select: { senderId: true, createdAt: true, content: true }
-  });
+    // 1. Verify ownership and check time window
+    const confession = await prisma.confession.findUnique({
+      where: { id: confessionId },
+      select: { senderId: true, createdAt: true, content: true }
+    });
 
-  if (!confession) return { error: "Message not found." };
+    if (!confession) return { error: "Message not found." };
 
-  if (confession.senderId !== session.user.id) {
-    return { error: "Unauthorized: You can only edit your own sent messages." };
-  }
-
-  // 2. Check if within 5-minute window (300 seconds)
-  const now = new Date();
-  const timeDiff = (now.getTime() - confession.createdAt.getTime()) / 1000; // in seconds
-  const EDIT_WINDOW_SECONDS = 5 * 60; // 5 minutes
-
-  if (timeDiff > EDIT_WINDOW_SECONDS) {
-    return { error: "Edit window has expired. Messages can only be edited within 5 minutes of sending." };
-  }
-
-  // 3. Update the confession
-  await prisma.confession.update({
-    where: { id: confessionId },
-    data: {
-      content: newContent,
-      editedAt: now
+    if (confession.senderId !== session.user.id) {
+      return { error: "Unauthorized: You can only edit your own sent messages." };
     }
-  });
 
-  // 4. Refresh caches
-  revalidateTag("user-profiles", "max");
-  revalidatePath("/dashboard/sent", "page");
-  return { success: true };
+    // 2. Check if within 5-minute window (300 seconds)
+    const now = new Date();
+    const timeDiff = (now.getTime() - confession.createdAt.getTime()) / 1000; // in seconds
+    const EDIT_WINDOW_SECONDS = 5 * 60; // 5 minutes
+
+    if (timeDiff > EDIT_WINDOW_SECONDS) {
+      return { error: "Edit window has expired. Messages can only be edited within 5 minutes of sending." };
+    }
+
+    // 3. Update the confession
+    await prisma.confession.update({
+      where: { id: confessionId },
+      data: {
+        content: newContent,
+        editedAt: now
+      }
+    });
+
+    // 4. Refresh caches
+    revalidateTag("user-profiles", {});
+    revalidatePath("/dashboard/sent", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Edit confession error:", error);
+    return { error: "Failed to edit message. Please try again." };
+  }
 }

@@ -1,11 +1,18 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  // Vercel automatically uses the correct binary for the platform
+  // 'native' is sufficient for both local development and Vercel deployment
+  binaryTargets = ["native"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // DIRECT_URL is required for Vercel Postgres migrations
+  // It provides a direct connection (bypassing PgBouncer connection pool)
+  // which is necessary for schema changes via Prisma Migrate
+  // @see {@link https://vercel.com/kb/guide/nextjs-prisma-postgres}
+  directUrl  = env("DIRECT_URL")
 }
 
 // 1. Define the Roles

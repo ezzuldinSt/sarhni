@@ -58,7 +58,6 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
                  sizes="128px"
                  className="object-cover"
                  loading="lazy"
-                 unoptimized={user.image !== undefined}
                />
             </div>
             <h1 className="text-page-title text-leather-accent mb-2">@{user.username}</h1>

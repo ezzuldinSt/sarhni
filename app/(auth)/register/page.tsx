@@ -1,5 +1,6 @@
 "use client";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { registerUser } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/Button";
@@ -7,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export default function RegisterPage() {
-  const [state, action] = useFormState(registerUser, null);
+  const [state, action] = useActionState(registerUser, null);
 
   return (
     <div className="flex items-center justify-center min-h-[80vh]">

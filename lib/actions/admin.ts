@@ -21,55 +21,65 @@ export async function getAllUsers(query: string = "") {
 
 // --- 2. BAN HAMMER ---
 export async function toggleBan(targetUserId: string) {
-  const session = await auth();
-  const actorRole = session?.user?.role;
+  try {
+    const session = await auth();
+    const actorRole = session?.user?.role;
 
-  if (actorRole !== "ADMIN" && actorRole !== "OWNER") return { error: "Unauthorized" };
+    if (actorRole !== "ADMIN" && actorRole !== "OWNER") return { error: "Unauthorized" };
 
-  // Fetch target
-  const target = await prisma.user.findUnique({
-    where: { id: targetUserId },
-    select: { id: true, role: true, isBanned: true }
-  });
-  if (!target) return { error: "User not found" };
+    // Fetch target
+    const target = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, role: true, isBanned: true }
+    });
+    if (!target) return { error: "User not found" };
 
-  // HIERARCHY CHECK
-  // Admins cannot ban Admins or Owners
-  if (actorRole === "ADMIN" && (target.role === "ADMIN" || target.role === "OWNER")) {
-    return { error: "You cannot ban your superiors or peers." };
+    // HIERARCHY CHECK
+    // Admins cannot ban Admins or Owners
+    if (actorRole === "ADMIN" && (target.role === "ADMIN" || target.role === "OWNER")) {
+      return { error: "You cannot ban your superiors or peers." };
+    }
+    // Owners cannot ban other Owners (if you had multiple)
+    if (actorRole === "OWNER" && target.role === "OWNER") {
+       return { error: "You cannot ban another Owner." };
+    }
+
+    // Execute
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { isBanned: !target.isBanned }
+    });
+
+    revalidateTag("admin-users", {});
+    revalidateTag("user-search", {});
+    revalidatePath("/admin", "page");
+    revalidatePath("/owner", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Toggle ban error:", error);
+    return { error: "Failed to update ban status. Please try again." };
   }
-  // Owners cannot ban other Owners (if you had multiple)
-  if (actorRole === "OWNER" && target.role === "OWNER") {
-     return { error: "You cannot ban another Owner." };
-  }
-
-  // Execute
-  await prisma.user.update({
-    where: { id: targetUserId },
-    data: { isBanned: !target.isBanned }
-  });
-
-  revalidateTag("admin-users", "max");
-  revalidateTag("user-search", "max");
-  revalidatePath("/admin", "page");
-  revalidatePath("/owner", "page");
-  return { success: true };
 }
 
 // --- 3. ROLE MANAGEMENT (OWNER ONLY) ---
 export async function updateUserRole(targetUserId: string, newRole: "USER" | "ADMIN") {
-  const role = await getCurrentRole();
-  
-  if (role !== "OWNER") return { error: "Only the Owner can promote users." };
+  try {
+    const role = await getCurrentRole();
 
-  await prisma.user.update({
-    where: { id: targetUserId },
-    data: { role: newRole }
-  });
+    if (role !== "OWNER") return { error: "Only the Owner can promote users." };
 
-  revalidateTag("admin-users", "max");
-  revalidatePath("/owner", "page");
-  return { success: true };
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { role: newRole }
+    });
+
+    revalidateTag("admin-users", {});
+    revalidatePath("/owner", "page");
+    return { success: true };
+  } catch (error) {
+    console.error("Update user role error:", error);
+    return { error: "Failed to update user role. Please try again." };
+  }
 }
 
 // --- 4. NUCLEAR OPTION (OWNER ONLY) ---
@@ -92,9 +102,9 @@ export async function deleteUserCompletely(targetUserId: string) {
 
     await prisma.$transaction([deleteConfessions, deleteUser]);
 
-    revalidateTag("admin-users", "max");
-    revalidateTag("user-search", "max");
-    revalidateTag("user-profiles", "max");
+    revalidateTag("admin-users", {});
+    revalidateTag("user-search", {});
+    revalidateTag("user-profiles", {});
     revalidatePath("/owner", "page");
     return { success: true };
   } catch (error) {

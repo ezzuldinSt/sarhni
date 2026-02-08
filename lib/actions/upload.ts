@@ -1,6 +1,5 @@
 "use server";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { put } from '@vercel/blob';
 import { randomUUID } from "node:crypto";
 
 // FIX: Helper function to detect real file type by inspecting "Magic Numbers"
@@ -95,31 +94,27 @@ export async function uploadImage(formData: FormData) {
     }
   }
 
-  
-  // Robust Path Construction
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-
   try {
-    await fs.access(uploadDir);
-  } catch {
-    await fs.mkdir(uploadDir, { recursive: true });
+    // FIX: Determine extension from the REAL mime type, not the filename
+    const extMap: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/gif": "gif",
+        "image/webp": "webp"
+    };
+    const safeExt = extMap[realMimeType];
+
+    // Generate a clean filename
+    const fileName = `${randomUUID()}.${safeExt}`;
+
+    // Upload to Vercel Blob Storage
+    const blob = await put(fileName, file, {
+      access: 'public',
+    });
+
+    return { success: true, url: blob.url };
+  } catch (error) {
+    console.error("Upload error:", error);
+    return { error: "Failed to upload file" };
   }
-
-  // FIX: Determine extension from the REAL mime type, not the filename
-  const extMap: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/gif": "gif",
-      "image/webp": "webp"
-  };
-  const safeExt = extMap[realMimeType];
-
-  // Generate a clean filename
-  const fileName = `${randomUUID()}.${safeExt}`;
-  const filePath = path.join(uploadDir, fileName);
-
-  // Write the file
-  await fs.writeFile(filePath, buffer);
-
-  return { success: true, url: `/api/uploads/${fileName}` };
 }

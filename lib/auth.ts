@@ -32,63 +32,78 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        const parsed = z.object({ username: z.string(), password: z.string() }).safeParse(credentials);
-        if (parsed.success) {
-          const user = await prisma.user.findUnique({ 
-            where: { username: parsed.data.username.toLowerCase() } 
-          });
-          
-          if (!user || !user.password) return null;
-          
-          // CHECK BAN STATUS
-          if (user.isBanned) {
-            throw new Error("This account has been banned.");
-          }
+        try {
+          const parsed = z.object({ username: z.string(), password: z.string() }).safeParse(credentials);
+          if (parsed.success) {
+            const user = await prisma.user.findUnique({
+              where: { username: parsed.data.username.toLowerCase() }
+            });
 
-          const match = await bcrypt.compare(parsed.data.password, user.password);
-          if (match) return user;
+            if (!user || !user.password) return null;
+
+            // CHECK BAN STATUS
+            if (user.isBanned) {
+              throw new Error("This account has been banned.");
+            }
+
+            const match = await bcrypt.compare(parsed.data.password, user.password);
+            if (match) return user;
+          }
+          return null;
+        } catch (error) {
+          console.error("Auth authorize error:", error);
+          // Re-throw ban errors, return null for database errors
+          if (error instanceof Error && error.message.includes("banned")) {
+            throw error;
+          }
+          return null;
         }
-        return null;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user, trigger }) {
-      if (user) {
-        token.sub = user.id;
-        token.role = user.role;
-        token.isBanned = user.isBanned;
-        token.username = user.username;
-        token.image = user.image;
-        token.lastChecked = Date.now();
-      }
-      // Refresh user data from DB on explicit update trigger
-      if (trigger === "update" && token.sub) {
-        const freshUser = await prisma.user.findUnique({ where: { id: token.sub } });
-        if (freshUser) {
-          token.role = freshUser.role;
-          token.isBanned = freshUser.isBanned;
-          token.username = freshUser.username;
-          token.image = freshUser.image;
+      try {
+        if (user) {
+          token.sub = user.id;
+          token.role = user.role;
+          token.isBanned = user.isBanned;
+          token.username = user.username;
+          token.image = user.image;
           token.lastChecked = Date.now();
         }
-      }
-      // Periodic refresh to catch bans and role changes (every 5 minutes)
-      const lastChecked = (token.lastChecked as number) || 0;
-      if (token.sub && Date.now() - lastChecked > 5 * 60 * 1000) {
-        const freshUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { role: true, isBanned: true, username: true, image: true },
-        });
-        if (freshUser) {
-          token.role = freshUser.role;
-          token.isBanned = freshUser.isBanned;
-          token.username = freshUser.username;
-          token.image = freshUser.image;
+        // Refresh user data from DB on explicit update trigger
+        if (trigger === "update" && token.sub) {
+          const freshUser = await prisma.user.findUnique({ where: { id: token.sub } });
+          if (freshUser) {
+            token.role = freshUser.role;
+            token.isBanned = freshUser.isBanned;
+            token.username = freshUser.username;
+            token.image = freshUser.image;
+            token.lastChecked = Date.now();
+          }
         }
-        token.lastChecked = Date.now();
+        // Periodic refresh to catch bans and role changes (every 5 minutes)
+        const lastChecked = (token.lastChecked as number) || 0;
+        if (token.sub && Date.now() - lastChecked > 5 * 60 * 1000) {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true, isBanned: true, username: true, image: true },
+          });
+          if (freshUser) {
+            token.role = freshUser.role;
+            token.isBanned = freshUser.isBanned;
+            token.username = freshUser.username;
+            token.image = freshUser.image;
+          }
+          token.lastChecked = Date.now();
+        }
+        return token;
+      } catch (error) {
+        console.error("JWT callback error:", error);
+        // Return existing token to prevent session disruption
+        return token;
       }
-      return token;
     },
     async session({ session, token }) {
       if (token.isBanned) {

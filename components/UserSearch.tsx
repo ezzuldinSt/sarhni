@@ -104,7 +104,6 @@ export default function UserSearch({ className }: { className?: string }) {
                                   fill
                                   sizes="32px"
                                   className="object-cover"
-                                  unoptimized={user.image !== undefined}
                               />
                           </div>
                           <span className="text-sm font-bold text-leather-accent group-hover:text-white truncate">
