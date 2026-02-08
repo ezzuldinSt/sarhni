@@ -83,7 +83,7 @@ export async function sendConfession(formData: FormData) {
     // OPTIMIZATION: Use only tag-based revalidation
     // revalidateTag invalidates all cached data with "user-profiles" tag
     // Path revalidations are redundant for dynamic pages (not ISR)
-    revalidateTag("user-profiles");
+    revalidateTag("user-profiles", {});
 
     return { success: true };
   } catch (error) {

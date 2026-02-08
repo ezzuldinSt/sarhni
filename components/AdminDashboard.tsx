@@ -156,7 +156,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent({ users, viewe
       ))}
     </div>
   );
-}
+});
 
 AdminDashboardContent.displayName = "AdminDashboardContent";
 

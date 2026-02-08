@@ -62,8 +62,8 @@ export async function toggleBan(targetUserId: string) {
     });
 
     // OPTIMIZATION: Tag-based revalidation is sufficient
-    revalidateTag("admin-users");
-    revalidateTag("user-search");
+    revalidateTag("admin-users", {});
+    revalidateTag("user-search", {});
     return { success: true };
   } catch (error) {
     console.error("Toggle ban error:", error);
@@ -84,7 +84,7 @@ export async function updateUserRole(targetUserId: string, newRole: "USER" | "AD
     });
 
     // OPTIMIZATION: Tag-based revalidation is sufficient
-    revalidateTag("admin-users");
+    revalidateTag("admin-users", {});
     return { success: true };
   } catch (error) {
     console.error("Update user role error:", error);
@@ -113,9 +113,9 @@ export async function deleteUserCompletely(targetUserId: string) {
     await prisma.$transaction([deleteConfessions, deleteUser]);
 
     // OPTIMIZATION: Tag-based revalidation is sufficient
-    revalidateTag("admin-users");
-    revalidateTag("user-search");
-    revalidateTag("user-profiles");
+    revalidateTag("admin-users", {});
+    revalidateTag("user-search", {});
+    revalidateTag("user-profiles", {});
     return { success: true };
   } catch (error) {
     console.error("Failed to delete user:", error);

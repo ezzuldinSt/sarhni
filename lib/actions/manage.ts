@@ -28,7 +28,7 @@ export async function deleteConfession(confessionId: string) {
 
     // 3. Refresh caches
     // OPTIMIZATION: Tag-based revalidation is sufficient for dynamic pages
-    revalidateTag("user-profiles");
+    revalidateTag("user-profiles", {});
     return { success: true };
   } catch (error) {
     console.error("Delete confession error:", error);
@@ -59,7 +59,7 @@ export async function replyToConfession(confessionId: string, replyContent: stri
     });
 
     // OPTIMIZATION: Tag-based revalidation invalidates all cached data
-    revalidateTag("user-profiles");
+    revalidateTag("user-profiles", {});
     return { success: true };
   } catch (error) {
     console.error("Reply to confession error:", error);
@@ -108,7 +108,7 @@ export async function togglePin(confessionId: string) {
     });
 
     // OPTIMIZATION: Tag-based revalidation invalidates all cached data
-    revalidateTag("user-profiles");
+    revalidateTag("user-profiles", {});
     return { success: true, isPinned: result.isPinned };
 
   } catch (error) {
@@ -196,7 +196,7 @@ export async function editConfession(confessionId: string, newContent: string) {
 
     // 4. Refresh caches
     // OPTIMIZATION: Tag-based revalidation is sufficient
-    revalidateTag("user-profiles");
+    revalidateTag("user-profiles", {});
     return { success: true };
   } catch (error) {
     console.error("Edit confession error:", error);
