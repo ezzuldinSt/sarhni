@@ -110,9 +110,12 @@ export async function POST(request: NextRequest) {
     // Generate a clean filename
     const fileName = `${randomUUID()}.${safeExt}`;
 
-    // Upload to Vercel Blob Storage (fixes Vercel deployment issues)
-    const blob = await put(fileName, file, {
+    // Upload to Vercel Blob Storage
+    // FIX: Pass buffer instead of File object to avoid stream issues in serverless
+    // Also explicitly set contentType since we're using buffer (not File)
+    const blob = await put(fileName, buffer, {
       access: 'public',
+      contentType: realMimeType,
     });
 
     // Return the Blob URL

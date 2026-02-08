@@ -108,8 +108,11 @@ export async function uploadImage(formData: FormData) {
     const fileName = `${randomUUID()}.${safeExt}`;
 
     // Upload to Vercel Blob Storage
-    const blob = await put(fileName, file, {
+    // FIX: Pass buffer instead of File object to avoid stream issues in serverless
+    // Also explicitly set contentType since we're using buffer (not File)
+    const blob = await put(fileName, buffer, {
       access: 'public',
+      contentType: realMimeType,
     });
 
     return { success: true, url: blob.url };
