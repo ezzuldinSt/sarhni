@@ -45,7 +45,7 @@ export default function UserSearch({ className }: { className?: string }) {
         const signal = abortController.signal;
 
         try {
-          const users = await searchUsers(query, signal);
+          const users = await searchUsers(query);
 
           // Only update state if this is still the latest request and wasn't aborted
           if (requestId === currentRequestId && !signal.aborted) {

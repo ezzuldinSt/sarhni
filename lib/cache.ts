@@ -81,7 +81,7 @@ export const getCachedAdminUsers = unstable_cache(
 );
 
 export const getCachedSearchResults = unstable_cache(
-  async (query: string, signal?: AbortSignal) => {
+  async (query: string) => {
     // Sanitize query to prevent cache key issues
     const sanitizedQuery = query.trim().toLowerCase();
 
@@ -98,8 +98,6 @@ export const getCachedSearchResults = unstable_cache(
         select: { username: true, image: true },
         take: 5,
         orderBy: { username: 'asc' }, // Consistent ordering for better cache hits
-        // @ts-ignore - Prisma supports abort signal but types may not include it
-        abortSignal: signal
       });
 
       return results;

@@ -6,7 +6,7 @@ import { getCachedSearchResults } from "@/lib/cache";
 // 20 searches per minute — generous for typing, tight enough to block scraping
 const checkSearchLimit = createRateLimiter(20, 60 * 1000);
 
-export async function searchUsers(query: string, signal?: AbortSignal) {
+export async function searchUsers(query: string) {
   if (!query || query.length < 2) return [];
 
   // Rate limit by IP (Vercel-compatible)
@@ -22,7 +22,7 @@ export async function searchUsers(query: string, signal?: AbortSignal) {
   }
 
   try {
-    return await getCachedSearchResults(query, signal);
+    return await getCachedSearchResults(query);
   } catch (error) {
     console.error("Search error:", error);
     return [];

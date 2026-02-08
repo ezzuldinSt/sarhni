@@ -119,11 +119,10 @@ export async function togglePin(confessionId: string) {
   }
 }
 
-export async function fetchConfessions(userId: string, offset: number = 0, signal?: AbortSignal) {
+export async function fetchConfessions(userId: string, offset: number = 0) {
   const PAGE_SIZE = 12;
 
   try {
-    // Pass abort signal to Prisma for cancellation support
     const confessions = await prisma.confession.findMany({
       where: { receiverId: userId },
       orderBy: [
@@ -136,9 +135,6 @@ export async function fetchConfessions(userId: string, offset: number = 0, signa
         sender: { select: { username: true } },
         receiver: { select: { username: true } }
       },
-      // Pass the abort signal through to the underlying request
-      // @ts-ignore - Prisma supports abort signal but types may not include it
-      abortSignal: signal
     });
 
     return confessions;

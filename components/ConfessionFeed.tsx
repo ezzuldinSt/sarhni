@@ -66,7 +66,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setError(null);
 
     try {
-      const newConfessions = await fetchConfessions(userId, offsetRef.current, abortController.signal);
+      const newConfessions = await fetchConfessions(userId, offsetRef.current);
 
       // Check if request was aborted
       if (abortController.signal.aborted) {
