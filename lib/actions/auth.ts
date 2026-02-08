@@ -45,6 +45,8 @@ export async function registerUser(prevState: any, formData: FormData) {
   const ownerUsername = process.env.OWNER_USERNAME?.toLowerCase();
   const role = ownerUsername && normalizedUsername === ownerUsername ? "OWNER" : "USER";
 
+  console.log(`[Registration] Attempt: username=${normalizedUsername}, role=${role}`);
+
   try {
     await prisma.user.create({
       data: {
@@ -53,8 +55,11 @@ export async function registerUser(prevState: any, formData: FormData) {
         role: role,
       },
     });
+    console.log(`[Registration] Success: username=${normalizedUsername}`);
   } catch (e) {
+    console.error(`[Registration] Error:`, e);
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(`[Registration] Prisma code:`, e.code, `meta:`, e.meta);
       if (e.code === 'P2002') return { error: "Username already taken." };
     }
     return { error: "Registration failed." };
