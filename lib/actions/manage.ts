@@ -27,8 +27,8 @@ export async function deleteConfession(confessionId: string) {
     });
 
     // 3. Refresh caches
-    revalidateTag("user-profiles", {});
-    revalidatePath("/dashboard", "page");
+    // OPTIMIZATION: Tag-based revalidation is sufficient for dynamic pages
+    revalidateTag("user-profiles");
     return { success: true };
   } catch (error) {
     console.error("Delete confession error:", error);
@@ -58,9 +58,8 @@ export async function replyToConfession(confessionId: string, replyContent: stri
       }
     });
 
-    revalidateTag("user-profiles", {});
-    revalidatePath("/dashboard", "page");
-    revalidatePath(`/u/${session.user.name}`, "page");
+    // OPTIMIZATION: Tag-based revalidation invalidates all cached data
+    revalidateTag("user-profiles");
     return { success: true };
   } catch (error) {
     console.error("Reply to confession error:", error);
@@ -108,9 +107,8 @@ export async function togglePin(confessionId: string) {
       return { isPinned: updated.isPinned, username: session.user.name };
     });
 
-    revalidateTag("user-profiles", {});
-    revalidatePath("/dashboard", "page");
-    revalidatePath(`/u/${result.username}`, "page");
+    // OPTIMIZATION: Tag-based revalidation invalidates all cached data
+    revalidateTag("user-profiles");
     return { success: true, isPinned: result.isPinned };
 
   } catch (error) {
@@ -184,8 +182,8 @@ export async function editConfession(confessionId: string, newContent: string) {
     });
 
     // 4. Refresh caches
-    revalidateTag("user-profiles", {});
-    revalidatePath("/dashboard/sent", "page");
+    // OPTIMIZATION: Tag-based revalidation is sufficient
+    revalidateTag("user-profiles");
     return { success: true };
   } catch (error) {
     console.error("Edit confession error:", error);

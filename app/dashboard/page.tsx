@@ -14,22 +14,22 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      username: true,
-      bio: true,
-      image: true,
-      createdAt: true,
-      _count: { select: {
-        receivedConfessions: true,
-        sentConfessions: true
-      }},
-    },
-  });
-
-  // Fetch additional stats for enhanced dashboard
-  const [pinnedCount, repliedCount, unreadCount] = await Promise.all([
+  // OPTIMIZATION: Run all initial queries in parallel
+  // User query + 3 count queries can all run simultaneously
+  const [user, pinnedCount, repliedCount, unreadCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        username: true,
+        bio: true,
+        image: true,
+        createdAt: true,
+        _count: { select: {
+          receivedConfessions: true,
+          sentConfessions: true
+        }},
+      },
+    }),
     prisma.confession.count({
       where: { receiverId: session.user.id, isPinned: true }
     }),

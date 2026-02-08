@@ -80,10 +80,11 @@ export async function sendConfession(formData: FormData) {
       },
     });
 
-    revalidateTag("user-profiles", {});
-    revalidatePath(`/u/${usernamePath}`, "page");
-    revalidatePath("/dashboard", "page");
-    
+    // OPTIMIZATION: Use only tag-based revalidation
+    // revalidateTag invalidates all cached data with "user-profiles" tag
+    // Path revalidations are redundant for dynamic pages (not ISR)
+    revalidateTag("user-profiles");
+
     return { success: true };
   } catch (error) {
     console.error("Confession Error:", error);

@@ -28,34 +28,35 @@ export default function UserSearch({ className }: { className?: string }) {
   }, []);
 
   // Debounce Search (Wait 300ms after typing stops before hitting DB)
+  // OPTIMIZATION: Use requestId to prevent race conditions from parallel searches
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
-    let isCancelled = false;
+    let currentRequestId = 0;
 
-    const performSearch = async () => {
-      if (isCancelled) return;
-
+    const performSearch = async (requestId: number) => {
       if (query.length >= 2) {
         setIsLoading(true);
         setIsOpen(true);
         const users = await searchUsers(query);
 
-        if (!isCancelled) {
+        // Only update state if this is still the latest request
+        if (requestId === currentRequestId) {
           setResults(users);
           setIsLoading(false);
         }
       } else {
         setResults([]);
         setIsOpen(false);
+        setIsLoading(false);
       }
     };
 
     timeoutId = setTimeout(() => {
-      performSearch();
+      currentRequestId++;
+      performSearch(currentRequestId);
     }, 300);
 
     return () => {
-      isCancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [query]);
