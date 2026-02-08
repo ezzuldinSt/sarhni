@@ -9,9 +9,6 @@ const checkSearchLimit = createRateLimiter(20, 60 * 1000);
 export async function searchUsers(query: string, signal?: AbortSignal) {
   if (!query || query.length < 2) return [];
 
-  // Check if request was aborted
-  if (signal?.aborted) return [];
-
   // Rate limit by IP (Vercel-compatible)
   const headerList = await headers();
   const ip = headerList.get("x-vercel-forwarded-for")
@@ -27,8 +24,6 @@ export async function searchUsers(query: string, signal?: AbortSignal) {
   try {
     return await getCachedSearchResults(query, signal);
   } catch (error) {
-    // Don't log error if request was aborted
-    if (signal?.aborted) return [];
     console.error("Search error:", error);
     return [];
   }

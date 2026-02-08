@@ -89,9 +89,6 @@ export const getCachedSearchResults = unstable_cache(
       return [];
     }
 
-    // Check if request was aborted
-    if (signal?.aborted) return [];
-
     try {
       const results = await prisma.user.findMany({
         where: {
@@ -107,8 +104,6 @@ export const getCachedSearchResults = unstable_cache(
 
       return results;
     } catch (error) {
-      // Don't log error if request was aborted
-      if (signal?.aborted) return [];
       console.error(`Search cache error for query "${sanitizedQuery}":`, error);
       return [];
     }
