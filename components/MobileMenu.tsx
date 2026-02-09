@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ export default function MobileMenu({ session }: { session: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
@@ -25,10 +26,29 @@ export default function MobileMenu({ session }: { session: any }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      // Focus management: Move focus to close button when menu opens
+      closeButtonRef.current?.focus();
     } else {
       document.body.style.overflow = "unset";
     }
     return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
+  // 3. ESC KEY HANDLER: Close menu on ESC key press
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [isOpen]);
 
   // 3. SWIPE LOGIC: Handle drag end
@@ -74,7 +94,7 @@ export default function MobileMenu({ session }: { session: any }) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={toggleOpen}
-                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-modal-backdrop"
+                className="fixed inset-0 bg-leather-900/90 backdrop-blur-sm z-modal-backdrop"
                 aria-hidden="true"
               />
 
@@ -94,14 +114,15 @@ export default function MobileMenu({ session }: { session: any }) {
                 role="dialog"
                 aria-modal="true"
                 aria-label="Mobile navigation menu"
-                className="fixed top-0 right-0 bottom-0 w-[75%] max-w-sm z-modal shadow-2xl flex flex-col p-6 border-l border-leather-600 touch-pan-x bg-leather-800"
+                className="fixed top-0 right-0 bottom-0 w-[75%] max-w-sm z-modal shadow-2xl flex flex-col p-6 border-l border-leather-700 touch-pan-x bg-leather-800"
               >
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
                   <span className="text-xl font-bold text-leather-pop tracking-tight">Menu</span>
-                  <button 
-                    onClick={toggleOpen} 
-                    className="text-leather-accent hover:text-red-400 p-1"
+                  <button
+                    ref={closeButtonRef}
+                    onClick={toggleOpen}
+                    className="text-leather-accent hover:text-leather-pop hover:bg-leather-700/30 p-2 rounded-lg transition-colors"
                     aria-label="Close Menu"
                   >
                     <X size={28} />
@@ -157,14 +178,14 @@ export default function MobileMenu({ session }: { session: any }) {
                           <Link
                             href="/admin/reports"
                             onClick={toggleOpen}
-                            className={`flex items-center gap-4 ${pathname.startsWith('/admin/reports') ? 'text-red-400 font-bold' : 'text-leather-accent'}`}
+                            className={`flex items-center gap-4 ${pathname.startsWith('/admin/reports') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                           >
                             <Flag size={20} /> Reports
                           </Link>
                           <Link
                             href="/admin"
                             onClick={toggleOpen}
-                            className={`flex items-center gap-4 ${pathname === '/admin' ? 'text-red-400 font-bold' : 'text-leather-accent'}`}
+                            className={`flex items-center gap-4 ${pathname === '/admin' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                           >
                             <Shield size={20} /> Admin Console
                           </Link>
@@ -176,7 +197,7 @@ export default function MobileMenu({ session }: { session: any }) {
                         <Link
                           href="/owner"
                           onClick={toggleOpen}
-                          className={`flex items-center gap-4 ${pathname === '/owner' ? 'text-yellow-400 font-bold' : 'text-leather-accent'}`}
+                          className={`flex items-center gap-4 ${pathname === '/owner' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                         >
                           <Crown size={20} /> Owner Command
                         </Link>
@@ -184,9 +205,9 @@ export default function MobileMenu({ session }: { session: any }) {
 
                       <div className="h-px bg-leather-600/50 my-2" />
 
-                      <button 
+                      <button
                         onClick={() => signOut({ callbackUrl: '/' })}
-                        className="flex items-center gap-4 text-red-400 font-bold"
+                        className="flex items-center gap-4 text-leather-pop font-bold"
                       >
                         <LogOut size={20} /> Sign Out
                       </button>

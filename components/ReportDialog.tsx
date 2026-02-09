@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X, Check } from "lucide-react";
+import { AlertTriangle, X, Check, Loader2 } from "lucide-react";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { createReport } from "@/lib/actions/report";
 
@@ -87,20 +87,20 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
               className="bg-leather-800 rounded-2xl shadow-2xl border border-leather-600/30 max-w-md w-full"
             >
               {/* Header */}
-              <div className="flex items-start gap-4 p-6 pb-4">
-                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle size={24} className="text-red-400" />
+              <div className="flex items-start gap-4 p-6 pb-4 relative">
+                <div className="w-12 h-12 rounded-full bg-leather-pop/10 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle size={24} className="text-leather-pop" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 pr-8">
                   <h2 className="text-xl font-bold text-leather-accent mb-1">Report Message</h2>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-leather-100 hover:text-leather-accent transition-colors"
+                    className="absolute top-4 right-4 p-2 text-leather-100 hover:text-leather-accent hover:bg-leather-700/50 rounded-lg transition-colors"
                     aria-label="Close dialog"
                   >
                     <X size={20} />
                   </button>
-                  <p className="text-sm text-leather-100">
+                  <p className="text-sm text-leather-accent/70">
                     Help us keep the community safe by reporting inappropriate content.
                   </p>
                 </div>
@@ -111,7 +111,7 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                 {/* Reason Selection */}
                 <div className="mb-6">
                   <label className="block text-sm font-bold text-leather-accent mb-3">
-                    Reason for reporting <span className="text-red-400">*</span>
+                    Reason for reporting <span className="text-leather-pop">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {REPORT_REASONS.map((reason) => (
@@ -119,13 +119,14 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                         key={reason.value}
                         type="button"
                         onClick={() => setSelectedReason(reason.value)}
-                        className={`p-3 rounded-xl border-2 transition-all text-left ${
+                        className={`p-3 rounded-xl border-2 transition-all text-left min-h-[64px] ${
                           selectedReason === reason.value
-                            ? "border-red-500 bg-red-500/10"
-                            : "border-leather-600 bg-leather-900 hover:border-leather-500"
+                            ? "border-leather-pop bg-leather-pop/10 shadow-lg shadow-leather-pop/20"
+                            : "border-leather-700 bg-leather-900 hover:border-leather-600 hover:bg-leather-800"
                         }`}
+                        aria-pressed={selectedReason === reason.value}
                       >
-                        <span className="text-lg mr-2">{reason.icon}</span>
+                        <span className="text-lg mr-2" aria-hidden="true">{reason.icon}</span>
                         <span className="text-sm font-medium">{reason.label}</span>
                       </button>
                     ))}
@@ -137,13 +138,30 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                   <label htmlFor="description" className="block text-sm font-bold text-leather-accent mb-2">
                     Additional details <span className="text-leather-500">(optional)</span>
                   </label>
-                  <textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Provide any additional context that might help us review this report..."
-                    className="w-full bg-leather-900 rounded-xl p-3 text-sm text-leather-accent focus:ring-2 focus:ring-red-500 outline-none min-h-[100px] resize-none"
-                  />
+                  <div className="relative">
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 500) {
+                          setDescription(e.target.value);
+                        }
+                      }}
+                      placeholder="Provide any additional context that might help us review this report..."
+                      className="w-full bg-leather-900 rounded-xl p-3 text-sm text-leather-accent focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-800 outline-none min-h-[100px] resize-none transition-all"
+                      maxLength={500}
+                      aria-describedby="description-char-count"
+                    />
+                    <span
+                      id="description-char-count"
+                      className={`absolute bottom-2 right-2 text-xs font-mono transition-colors ${
+                        description.length > 450 ? 'text-red-400 font-bold' : 'text-leather-500'
+                      }`}
+                      aria-live="polite"
+                    >
+                      {description.length}/500
+                    </span>
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -152,17 +170,26 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                     type="button"
                     onClick={onClose}
                     disabled={isSubmitting}
-                    className="px-4 py-2 text-sm font-bold bg-leather-700 hover:bg-leather-600 text-leather-accent rounded-lg transition-colors disabled:opacity-50"
+                    className="px-4 py-2.5 text-sm font-bold bg-leather-700 hover:bg-leather-600 text-leather-accent rounded-lg transition-colors disabled:opacity-50 min-h-touch"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!selectedReason || isSubmitting}
-                    className="px-4 py-2 text-sm font-bold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2.5 text-sm font-bold bg-danger hover:bg-danger-hover text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-touch shadow-lg hover:shadow-xl"
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Report"}
-                    {!isSubmitting && <AlertTriangle size={16} />}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        Submit Report
+                        <AlertTriangle size={16} />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>

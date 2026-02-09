@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getCachedUserHeader, getCachedUserConfessions, getCachedUserMeta } from "@/lib/cache";
 import ConfessionForm from "@/components/ConfessionForm";
+import ShareLinkCard from "@/components/ShareLinkCard";
 import { Card } from "@/components/ui/Card";
 import Image from "next/image";
 import ConfessionFeed from "@/components/ConfessionFeed";
@@ -62,17 +63,20 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
                />
             </div>
             <h1 className="text-page-title text-leather-accent mb-2">@{user.username}</h1>
-            {user.bio && <p className="text-leather-100 max-w-sm mx-auto italic">"{user.bio}"</p>}
+            {user.bio && <p className="text-leather-accent/80 max-w-sm mx-auto italic">"{user.bio}"</p>}
          </div>
       </Card>
 
       {/* Confession Form (renders immediately, only if NOT the owner) */}
       {!isOwner && (
-         <ConfessionForm
-           receiverId={user.id}
-           usernamePath={user.username}
-           user={session?.user}
-         />
+         <>
+            <ShareLinkCard username={user.username} />
+            <ConfessionForm
+              receiverId={user.id}
+              usernamePath={user.username}
+              user={session?.user}
+            />
+         </>
       )}
 
       {/* Confessions Feed (streams in via Suspense) */}

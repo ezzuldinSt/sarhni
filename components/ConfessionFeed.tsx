@@ -160,7 +160,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       {/* 3. Error State */}
       {error && (
         <div className="py-8 text-center">
-          <p className="text-red-400 mb-4">{error}</p>
+          <p className="text-danger-light mb-4">{error}</p>
           <button
             onClick={() => {
               setError(null);

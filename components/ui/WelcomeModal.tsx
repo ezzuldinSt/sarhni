@@ -31,19 +31,19 @@ const steps: Step[] = [
   },
   {
     id: 2,
-    icon: <Share2 size={32} className="text-blue-400" />,
+    icon: <Share2 size={32} className="text-leather-100" />,
     title: "Share Your Profile",
     description: "Copy your unique profile link and share it on social media, with friends, or anywhere you want to receive anonymous messages.",
   },
   {
     id: 3,
-    icon: <MessageSquare size={32} className="text-green-400" />,
+    icon: <MessageSquare size={32} className="text-success" />,
     title: "Send Anonymous Messages",
     description: "Visit other users' profiles to send them anonymous confessions. Choose to reveal yourself or stay completely anonymous.",
   },
   {
     id: 4,
-    icon: <Pin size={32} className="text-yellow-400" />,
+    icon: <Pin size={32} className="text-warning" />,
     title: "Pin Your Favorites",
     description: "Love a message? Pin it to your profile! You can pin up to 3 messages to showcase your favorite confessions.",
   },
@@ -139,7 +139,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
               {/* Close button */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-leather-100 hover:text-leather-accent transition-colors z-10"
+                className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 z-10 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
                 aria-label="Close welcome tour"
               >
                 <X size={24} />
@@ -158,7 +158,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
               {/* Content */}
               <div className="p-8 text-center">
                 {/* Step indicator */}
-                <div className="text-sm text-leather-100 mb-4">
+                <div className="text-sm text-leather-accent mb-4">
                   Step {currentStep + 1} of {steps.length}
                 </div>
 
@@ -206,7 +206,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                   <button
                     onClick={handlePrevious}
                     disabled={currentStep === 0}
-                    className="px-4 py-2 text-sm font-bold text-leather-100 hover:text-leather-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 text-sm font-bold text-leather-accent hover:text-leather-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800 rounded-lg"
                   >
                     Previous
                   </button>
@@ -220,11 +220,11 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                           setDirection(index > currentStep ? 1 : -1);
                           setCurrentStep(index);
                         }}
-                        className={`w-2 h-2 rounded-full transition-all ${
+                        className={`w-2 h-2 rounded-full transition-all duration-200 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800 ${
                           index === currentStep
                             ? "bg-leather-pop w-6"
                             : index < currentStep
-                            ? "bg-leather-600"
+                            ? "bg-leather-500"
                             : "bg-leather-700"
                         }`}
                         aria-label={`Go to step ${index + 1}`}

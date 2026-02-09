@@ -48,23 +48,23 @@ function calculatePasswordStrength(password: string): PasswordStrength {
   } else if (metRequirements <= 1) {
     score = 0;
     label = "Weak";
-    color = "bg-red-500";
+    color = "bg-danger";
   } else if (metRequirements === 2) {
     score = 1;
     label = "Fair";
-    color = "bg-orange-500";
+    color = "bg-warning";
   } else if (metRequirements === 3) {
     score = 2;
     label = "Good";
-    color = "bg-yellow-500";
+    color = "bg-leather-pop";
   } else if (metRequirements === 4) {
     score = 3;
     label = "Strong";
-    color = "bg-green-500";
+    color = "bg-success";
   } else {
     score = 4;
     label = "Very Strong";
-    color = "bg-emerald-500";
+    color = "bg-success";
   }
 
   return { score, label, color, requirements };
@@ -103,7 +103,7 @@ export function PasswordInput({
           required={required}
           value={passwordValue}
           onChange={handleChange}
-          className={`w-full bg-leather-900 rounded-xl p-3 pr-12 text-leather-accent focus:ring-2 focus:ring-leather-pop outline-none ${className}`}
+          className={`w-full bg-leather-900 rounded-xl p-3 pr-12 text-leather-accent placeholder:text-leather-600 focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 outline-none transition-all duration-200 ${className}`}
           placeholder={placeholder}
           aria-describedby="password-strength password-requirements"
         />
@@ -123,7 +123,7 @@ export function PasswordInput({
           <div className="flex items-center justify-between">
             <span className="text-xs text-leather-500">Password strength:</span>
             <span
-              className={`text-xs font-bold ${strength.label === "Weak" ? "text-red-400" : strength.label === "Fair" ? "text-orange-400" : strength.label === "Good" ? "text-yellow-400" : "text-green-400"}`}
+              className={`text-xs font-bold ${strength.label === "Weak" ? "text-danger" : strength.label === "Fair" ? "text-warning" : strength.label === "Good" ? "text-leather-pop" : "text-success"}`}
               aria-live="polite"
             >
               {strength.label}
@@ -144,31 +144,33 @@ export function PasswordInput({
               />
             ))}
           </div>
-
-          {/* Requirements checklist */}
-          <div
-            id="password-requirements"
-            className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs pt-2"
-            aria-label="Password requirements"
-          >
-            <RequirementItem
-              met={strength.requirements.length}
-              text="At least 8 characters"
-            />
-            <RequirementItem met={strength.requirements.lowercase} text="Lowercase letter" />
-            <RequirementItem met={strength.requirements.uppercase} text="Uppercase letter" />
-            <RequirementItem met={strength.requirements.number} text="Number" />
-            <RequirementItem met={strength.requirements.special} text="Special character" />
-          </div>
         </div>
       )}
+
+      {/* Requirements checklist - always show but dimmed when not typing */}
+      <div
+        id="password-requirements"
+        className={`grid grid-cols-2 gap-x-4 gap-y-1 text-xs pt-2 transition-opacity duration-200 ${
+          passwordValue.length === 0 ? "opacity-40" : "opacity-100"
+        }`}
+        aria-label="Password requirements"
+      >
+        <RequirementItem
+          met={strength.requirements.length}
+          text="At least 8 characters"
+        />
+        <RequirementItem met={strength.requirements.lowercase} text="Lowercase letter" />
+        <RequirementItem met={strength.requirements.uppercase} text="Uppercase letter" />
+        <RequirementItem met={strength.requirements.number} text="Number" />
+        <RequirementItem met={strength.requirements.special} text="Special character" />
+      </div>
     </div>
   );
 }
 
 function RequirementItem({ met, text }: { met: boolean; text: string }) {
   return (
-    <div className={`flex items-center gap-2 ${met ? "text-green-400" : "text-leather-600"}`}>
+    <div className={`flex items-center gap-2 ${met ? "text-success" : "text-leather-600"}`}>
       {met ? <Check size={12} /> : <X size={12} />}
       <span>{text}</span>
     </div>

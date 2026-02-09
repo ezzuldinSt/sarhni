@@ -90,7 +90,7 @@ export const EmptyState = memo(function EmptyState({
       )}
       {Icon && !illustration && (
         <div className="w-16 h-16 bg-leather-800 rounded-full flex items-center justify-center mb-4">
-          <Icon size={32} className="text-leather-100" />
+          <Icon size={32} className="text-leather-accent" />
         </div>
       )}
       {emoji && !Icon && !illustration && (
@@ -116,7 +116,7 @@ export const EmptyState = memo(function EmptyState({
           {secondaryAction && (
             <button
               onClick={handleSecondaryActionClick}
-              className="px-4 py-2 text-sm text-leather-pop hover:text-white transition-colors font-bold"
+              className="px-4 py-2 text-sm text-leather-pop hover:text-leather-accent transition-colors duration-200 font-bold focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-900 rounded-lg"
             >
               {secondaryAction.label}
             </button>
@@ -154,15 +154,15 @@ export const EmptySearchResults = memo(function EmptySearchResults({ query }: { 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
       <svg viewBox="0 0 200 200" className="w-20 h-20 mb-3 opacity-40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="80" cy="80" r="40" className="stroke-leather-100" strokeWidth="2" fill="none"/>
-        <path d="M110 110 L150 150" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M65 70 L70 75 M70 70 L65 75" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M95 85 L100 90 M100 85 L95 90" className="stroke-leather-100" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="80" cy="80" r="40" className="stroke-leather-accent" strokeWidth="2" fill="none"/>
+        <path d="M110 110 L150 150" className="stroke-leather-accent" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M65 70 L70 75 M70 70 L65 75" className="stroke-leather-accent" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M95 85 L100 90 M100 85 L95 90" className="stroke-leather-accent" strokeWidth="2" strokeLinecap="round"/>
       </svg>
-      <p className="text-sm text-leather-100">
-        No souls found matching <span className="text-leather-accent font-medium">"{query}"</span>
+      <p className="text-sm text-leather-accent">
+        No souls found matching <span className="text-leather-pop font-medium">"{query}"</span>
       </p>
-      <p className="text-xs text-leather-accent mt-1">Try a different search term</p>
+      <p className="text-xs text-leather-500 mt-1">Try a different search term</p>
     </div>
   );
 });

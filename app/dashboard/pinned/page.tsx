@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Pin, Loader2 } from "lucide-react";
+import { Pin } from "lucide-react";
 import ConfessionFeed from "@/components/ConfessionFeed";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -12,11 +12,11 @@ export default async function PinnedPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-leather-pop mb-2 flex items-center gap-2">
+        <h1 className="text-page-title text-leather-pop mb-2 flex items-center gap-2">
           <Pin size={28} className="text-leather-pop" />
           Pinned Messages
         </h1>
-        <p className="text-leather-500">Your favorite messages (up to 3)</p>
+        <p className="text-leather-accent/70 text-sm">Your favorite messages (up to 3)</p>
       </div>
 
       <Suspense fallback={<LoadingSkeleton />}>
@@ -66,7 +66,11 @@ function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="h-48 bg-leather-700/20 rounded-3xl" />
+        <div
+          key={i}
+          className="h-48 bg-leather-800/30 rounded-3xl border border-leather-700/20"
+          style={{ animationDelay: `${i * 100}ms` }}
+        />
       ))}
     </div>
   );

@@ -13,6 +13,7 @@ export default function UserSearch({ className }: { className?: string }) {
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -45,11 +46,12 @@ export default function UserSearch({ className }: { className?: string }) {
         const signal = abortController.signal;
 
         try {
-          const users = await searchUsers(query);
+          const result = await searchUsers(query);
 
           // Only update state if this is still the latest request and wasn't aborted
           if (requestId === currentRequestId && !signal.aborted) {
-            setResults(users);
+            setResults(result.users);
+            setIsRateLimited(result.rateLimited);
             setIsLoading(false);
           }
         } catch (error) {
@@ -61,6 +63,7 @@ export default function UserSearch({ className }: { className?: string }) {
         }
       } else {
         setResults([]);
+        setIsRateLimited(false);
         setIsOpen(false);
         setIsLoading(false);
       }
@@ -80,6 +83,7 @@ export default function UserSearch({ className }: { className?: string }) {
   const handleSelect = (username: string) => {
     setQuery("");
     setIsOpen(false);
+    setIsRateLimited(false);
     router.push(`/u/${username}`);
     // If inside mobile menu, we might want to close it,
     // but the Link click in MobileMenu.tsx handles that separately.
@@ -89,18 +93,20 @@ export default function UserSearch({ className }: { className?: string }) {
     <div ref={containerRef} className={`relative ${className || ""}`}>
         {/* Search Input */}
         <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-leather-500 group-focus-within:text-leather-pop transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-leather-500 group-focus-within:text-leather-pop transition-colors" aria-hidden="true" />
             <input
                 type="text"
+                inputMode="search"
+                enterKeyHint="search"
                 aria-label="Search users"
                 placeholder="Find a soul..."
-                className="w-full bg-leather-900 border border-leather-600/50 rounded-full py-2 pl-10 pr-4 text-sm text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-1 focus:ring-leather-pop focus:border-leather-pop transition-all"
+                className="w-full bg-leather-900 border border-leather-600/50 rounded-full py-2.5 pl-10 pr-10 text-sm text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-2 focus:ring-leather-pop focus:border-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 transition-all"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => query.length >= 2 && setIsOpen(true)}
             />
             {isLoading && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-leather-pop animate-spin" />
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-leather-pop animate-spin" aria-hidden="true" />
             )}
         </div>
 
@@ -135,7 +141,17 @@ export default function UserSearch({ className }: { className?: string }) {
         {/* No Results State */}
         {isOpen && results.length === 0 && query.length >= 2 && !isLoading && (
              <div className="absolute top-full mt-3 w-full bg-leather-800 border border-leather-600 rounded-2xl shadow-xl p-4 z-50">
-                <EmptySearchResults query={query} />
+                {isRateLimited ? (
+                  <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
+                    <svg className="w-12 h-12 mb-3 text-leather-pop opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-leather-accent font-medium">Slow down, speed demon!</p>
+                    <p className="text-xs text-leather-500 mt-1">You're searching too fast. Take a breath.</p>
+                  </div>
+                ) : (
+                  <EmptySearchResults query={query} />
+                )}
              </div>
         )}
     </div>

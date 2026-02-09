@@ -4,8 +4,7 @@ import { Search as SearchIcon } from "lucide-react";
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen bg-leather-900">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-leather-pop/10 flex items-center justify-center">
@@ -48,7 +47,6 @@ export default function SearchPage() {
             </ul>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmDialogProvider, useConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { updateReportStatus } from "@/lib/actions/report";
 import { toastSuccess, toastError } from "@/lib/toast";
-import { AlertTriangle, CheckCircle, XCircle, User, MessageCircle, Flag, Eye, ExternalLink } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, User, MessageCircle, Flag, Eye, ExternalLink, Search, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 
 const STATUS_BADGES = {
@@ -31,6 +31,7 @@ interface Report {
   reporter: { username: string };
   reviewer: { username: string } | null;
   confession: {
+    id: string;
     content: string;
     reply: string | null;
     isAnonymous: boolean;
@@ -42,10 +43,22 @@ interface Report {
 function ReportsDashboardContent({ initialReports, viewerRole }: { initialReports: Report[], viewerRole: string }) {
   const [reports, setReports] = useState(initialReports);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "REVIEWED" | "DISMISSED">("ALL");
+  const [reasonFilter, setReasonFilter] = useState<"ALL" | Report["reason"]>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedReport, setExpandedReport] = useState<string | null>(null);
   const { confirm } = useConfirmDialog();
 
-  const filteredReports = reports.filter(r => filter === "ALL" || r.status === filter);
+  // Apply multiple filters
+  const filteredReports = reports.filter(r => {
+    const matchesStatus = filter === "ALL" || r.status === filter;
+    const matchesReason = reasonFilter === "ALL" || r.reason === reasonFilter;
+    const matchesSearch = searchQuery === "" ||
+      r.reporter.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.confession.receiver.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.confession.content?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    return matchesStatus && matchesReason && matchesSearch;
+  });
+
   const pendingCount = reports.filter(r => r.status === "PENDING").length;
 
   const handleStatusUpdate = async (reportId: string, newStatus: "REVIEWED" | "DISMISSED") => {
@@ -78,13 +91,14 @@ function ReportsDashboardContent({ initialReports, viewerRole }: { initialReport
     <div className="space-y-6">
       {/* Stats Bar */}
       <div className="flex items-center gap-4 flex-wrap">
-        <div className={`px-4 py-2 rounded-lg border ${pendingCount > 0 ? 'bg-red-500/20 border-red-500/30' : 'bg-leather-800 border-leather-700'}`}>
-          <span className="text-sm font-bold text-leather-accent">
+        <div className={`px-4 py-2 rounded-lg border ${pendingCount > 0 ? 'bg-danger/20 border-danger/30' : 'bg-leather-800 border-leather-700'}`}>
+          <span className="text-sm font-bold text-leather-accent flex items-center gap-2">
+            <AlertTriangle size={16} className={pendingCount > 0 ? "text-danger" : "text-leather-500"} />
             {pendingCount} Pending {pendingCount === 1 ? "Report" : "Reports"}
           </span>
         </div>
 
-        {/* Filter Tabs */}
+        {/* Status Filter Tabs */}
         <div className="flex gap-2 flex-wrap">
           {(["ALL", "PENDING", "REVIEWED", "DISMISSED"] as const).map((status) => {
             const count = status === "ALL" ? reports.length : reports.filter(r => r.status === status).length;
@@ -106,17 +120,52 @@ function ReportsDashboardContent({ initialReports, viewerRole }: { initialReport
         </div>
       </div>
 
+      {/* Search and Reason Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-leather-500" />
+          <input
+            type="text"
+            placeholder="Search by reporter, content, or receiver..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-leather-800 border border-leather-700 rounded-lg text-leather-accent placeholder:text-leather-500 focus:outline-none focus:ring-2 focus:ring-leather-pop/50"
+          />
+        </div>
+
+        {/* Reason Filter */}
+        <select
+          value={reasonFilter}
+          onChange={(e) => setReasonFilter(e.target.value as typeof reasonFilter)}
+          className="px-4 py-2.5 bg-leather-800 border border-leather-700 rounded-lg text-leather-accent focus:outline-none focus:ring-2 focus:ring-leather-pop/50"
+        >
+          <option value="ALL">All Reasons</option>
+          <option value="SPAM">📧 Spam</option>
+          <option value="HARASSMENT">⚠️ Harassment</option>
+          <option value="HATE_SPEECH">🚫 Hate Speech</option>
+          <option value="INAPPROPRIATE_CONTENT">🔞 Inappropriate</option>
+          <option value="OTHER">📝 Other</option>
+        </select>
+      </div>
+
       {/* Reports List */}
       {filteredReports.length === 0 ? (
         <Card className="p-8 text-center bg-leather-800/50 border-leather-700">
           <Flag className="w-12 h-12 text-leather-600 mx-auto mb-4" />
           <p className="text-leather-accent font-bold mb-2">No reports found</p>
           <p className="text-sm text-leather-500">
-            {filter === "ALL" ? "No reports have been submitted yet." : `No ${filter.toLowerCase()} reports.`}
+            {searchQuery || filter !== "ALL" || reasonFilter !== "ALL"
+              ? "Try adjusting your search or filters."
+              : "No reports have been submitted yet."}
           </p>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <>
+          <p className="text-sm text-leather-500">
+            Showing {filteredReports.length} of {reports.length} reports
+          </p>
+          <div className="space-y-4">
           {filteredReports.map((report, index) => {
             const statusStyle = STATUS_BADGES[report.status as keyof typeof STATUS_BADGES];
             const isExpanded = expandedReport === report.id;
@@ -183,7 +232,18 @@ function ReportsDashboardContent({ initialReports, viewerRole }: { initialReport
                       <div className="p-4 space-y-4">
                         {/* Reported Message */}
                         <div>
-                          <p className="text-xs font-bold text-leather-500 uppercase tracking-wide mb-2">Reported Message</p>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-leather-500 uppercase tracking-wide">Reported Message</p>
+                            <a
+                              href={`/u/${report.confession.receiver.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-leather-pop hover:text-leather-popHover flex items-center gap-1 transition-colors"
+                            >
+                              <ExternalLink size={12} />
+                              View on Profile
+                            </a>
+                          </div>
                           <div className="bg-leather-800/50 rounded-lg p-3 border border-leather-700">
                             <div className="flex items-center gap-2 mb-2">
                               <div className="w-6 h-6 rounded-full bg-leather-pop flex items-center justify-center text-xs text-leather-900 font-bold">
@@ -251,7 +311,8 @@ function ReportsDashboardContent({ initialReports, viewerRole }: { initialReport
               </motion.div>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

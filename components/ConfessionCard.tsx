@@ -57,7 +57,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
     try {
       const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(stickerRef.current, {
-        backgroundColor: "#2C1A1D", // Match leather-900 theme background
+        backgroundColor: "#2C1A1D", // leather-900 - keeping hex for html2canvas compatibility
         scale: 2, // High resolution
         logging: false,
         useCORS: true
@@ -148,7 +148,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                  aria-label={isPinned ? "Unpin message" : "Pin message"}
                  className={`p-2 min-h-[44px] min-w-[44px] rounded-full shadow-lg transition-colors ${
                    isPinned
-                     ? "bg-leather-pop text-leather-900 hover:bg-leather-popHover"
+                     ? "bg-leather-pop text-leather-900 hover:opacity-90"
                      : "bg-leather-800 text-leather-100 hover:text-leather-pop"
                  }`}
                  title={isPinned ? "Unpin" : "Pin to Top"}
@@ -162,7 +162,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                <button
                  onClick={() => setIsEditing(true)}
                  aria-label="Edit message"
-                 className="p-2 min-h-touch min-w-touch bg-leather-800 text-info rounded-full hover:bg-info hover:text-white shadow-lg transition-colors"
+                 className="p-2 min-h-touch min-w-touch bg-leather-800 text-leather-pop rounded-full hover:bg-leather-pop hover:text-leather-900 shadow-lg transition-colors"
                  title="Edit message (5 min window)"
                >
                   <Edit3 className="w-4 h-4" />
@@ -174,7 +174,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                onClick={() => handleDelete(confession.id)}
                disabled={isDeleting || isGenerating}
                aria-label="Delete message"
-               className="p-2 min-h-touch min-w-touch bg-leather-800 text-danger rounded-full hover:bg-danger hover:text-white shadow-lg disabled:opacity-50 transition-colors"
+               className="p-2 min-h-touch min-w-touch bg-leather-800 text-danger-light rounded-full hover:bg-danger hover:text-white shadow-lg disabled:opacity-50 transition-colors"
                title="Delete Message"
              >
                 {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
@@ -198,7 +198,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
           <button
             onClick={handleReport}
             aria-label="Report this message"
-            className="absolute top-4 right-4 p-2 min-h-touch min-w-touch bg-leather-800/80 text-danger rounded-full hover:bg-danger hover:text-white shadow-lg opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity z-dropdown"
+            className="absolute top-4 right-4 p-2 min-h-touch min-w-touch bg-leather-800/80 text-danger-light rounded-full hover:bg-danger hover:text-white shadow-lg opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity z-dropdown"
             title="Report inappropriate content"
           >
             <Flag className="w-4 h-4" />
@@ -248,7 +248,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
 
         {/* --- Reply Section (Display) --- */}
         {optimisticReply && (
-          <div className="mt-2 bg-leather-900/50 p-4 rounded-xl border-l-4 border-leather-pop mb-4">
+          <div className="mt-2 bg-leather-800/50 p-4 rounded-xl border-l-4 border-leather-pop mb-4">
             <div className="flex items-center gap-2 mb-1">
                <div className="w-avatar-xs h-avatar-xs rounded-full bg-leather-pop flex items-center justify-center text-[10px] text-leather-900 font-bold">
                  {confession.receiver?.username?.[0].toUpperCase() || "Me"}

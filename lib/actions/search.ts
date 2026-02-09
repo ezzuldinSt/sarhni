@@ -7,7 +7,7 @@ import { getCachedSearchResults } from "@/lib/cache";
 const checkSearchLimit = createRateLimiter(20, 60 * 1000);
 
 export async function searchUsers(query: string) {
-  if (!query || query.length < 2) return [];
+  if (!query || query.length < 2) return { users: [], rateLimited: false };
 
   // Rate limit by IP (Vercel-compatible)
   const headerList = await headers();
@@ -18,13 +18,14 @@ export async function searchUsers(query: string) {
 
   if (ip !== "unknown" && ip !== "127.0.0.1" && ip !== "::1") {
     const limit = checkSearchLimit(ip);
-    if (!limit.success) return [];
+    if (!limit.success) return { users: [], rateLimited: true };
   }
 
   try {
-    return await getCachedSearchResults(query);
+    const users = await getCachedSearchResults(query);
+    return { users, rateLimited: false };
   } catch (error) {
     console.error("Search error:", error);
-    return [];
+    return { users: [], rateLimited: false };
   }
 }

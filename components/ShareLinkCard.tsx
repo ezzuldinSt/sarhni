@@ -55,7 +55,7 @@ function ShareLinkCardInner({ username }: ShareLinkCardProps) {
         </p>
 
         {/* Link Input with Copy Button */}
-        <div className="flex items-stretch gap-2 p-1.5 rounded-xl bg-leather-950/50 border border-leather-700/50">
+        <div className="flex items-stretch gap-2 p-1.5 rounded-xl bg-leather-900/80 border border-leather-700/50">
           <code className="flex-1 text-sm text-leather-100 truncate px-3 py-2.5 font-mono bg-leather-900/50 rounded-lg self-center">
             {link}
           </code>

@@ -141,19 +141,19 @@ export function ConfirmDialog({
         return {
           icon: "text-danger",
           iconBg: "bg-danger-bg",
-          button: "bg-danger hover:bg-danger-hover text-white"
+          button: "bg-danger hover:bg-danger-hover text-white focus-visible:ring-danger"
         };
       case "warning":
         return {
           icon: "text-warning",
           iconBg: "bg-warning-bg",
-          button: "bg-warning hover:bg-warning/90 text-leather-900"
+          button: "bg-warning hover:bg-warning/90 text-leather-900 focus-visible:ring-warning"
         };
       case "info":
         return {
           icon: "text-leather-pop",
           iconBg: "bg-leather-pop/20",
-          button: "bg-leather-pop hover:bg-leather-popHover text-leather-900"
+          button: "bg-leather-pop hover:bg-leather-popHover text-leather-900 focus-visible:ring-leather-pop"
         };
     }
   };
@@ -198,7 +198,7 @@ export function ConfirmDialog({
                 <div className={`w-12 h-12 rounded-full ${styles.iconBg} flex items-center justify-center flex-shrink-0`}>
                   <AlertTriangle size={24} className={styles.icon} />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 pr-8">
                   <h2
                     id="dialog-title"
                     className="text-lg font-bold text-leather-accent mb-1"
@@ -207,7 +207,7 @@ export function ConfirmDialog({
                   </h2>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors"
+                    className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
                     aria-label="Close dialog"
                   >
                     <X size={20} />
@@ -229,14 +229,14 @@ export function ConfirmDialog({
                   ref={cancelButtonRef}
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 bg-leather-700 hover:bg-leather-600 text-leather-accent font-bold rounded-lg transition-all shadow-md border-b-4 border-leather-900 active:border-b-0 active:translate-y-1 active:scale-95"
+                  className="px-4 py-2 bg-leather-700 hover:bg-leather-500 text-leather-accent font-bold rounded-lg transition-all duration-200 shadow-md border-b-4 border-leather-900 active:border-b-0 active:translate-y-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-leather-accent focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
                 >
                   {cancelText}
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmClick}
-                  className={`px-4 py-2 font-bold rounded-lg transition-all shadow-md border-b-4 active:border-b-0 active:translate-y-1 active:scale-95 ${styles.button}`}
+                  className={`px-4 py-2 font-bold rounded-lg transition-all duration-200 shadow-md border-b-4 active:border-b-0 active:translate-y-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800 ${styles.button}`}
                 >
                   {confirmText}
                 </button>

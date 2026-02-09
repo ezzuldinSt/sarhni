@@ -13,8 +13,11 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="max-w-xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8 text-leather-pop">Edit Profile</h1>
+    <div className="max-w-xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-page-title text-leather-pop mb-2">Edit Profile</h1>
+        <p className="text-leather-accent/70 text-sm">Update your profile picture and bio</p>
+      </div>
       <SettingsForm user={user} />
     </div>
   );

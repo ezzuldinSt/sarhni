@@ -83,11 +83,11 @@ export default function ConfessionForm({ receiverId, usernamePath, user }: { rec
             aria-live="polite"
             aria-atomic="true"
           >
-            <div className="w-16 h-16 bg-success-bg text-success rounded-full flex items-center justify-center mb-2" aria-hidden="true">
+            <div className="w-16 h-16 bg-success/20 text-success rounded-full flex items-center justify-center mb-2" aria-hidden="true">
               <Send size={32} />
             </div>
             <h3 className="text-2xl font-bold text-white">Message Sent!</h3>
-            <p className="text-leather-500 max-w-xs mx-auto">
+            <p className="text-leather-accent/80 max-w-xs mx-auto">
               Your secret is safe with us. Want to send another?
             </p>
             <Button
@@ -132,7 +132,7 @@ export default function ConfessionForm({ receiverId, usernamePath, user }: { rec
             <textarea
               id="confession-content"
               {...register("content")}
-              className="w-full bg-leather-900/50 rounded-xl p-4 text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-2 focus:ring-leather-pop resize-none h-32 transition-all"
+              className="w-full bg-leather-900/50 rounded-xl p-4 text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-800 resize-none h-32 transition-all"
               placeholder="Type something nice (or spicy)..."
               aria-label="Write your anonymous message"
               aria-describedby={errors.content ? `${contentErrorId} char-count` : "char-count"}
@@ -143,10 +143,13 @@ export default function ConfessionForm({ receiverId, usernamePath, user }: { rec
             {errors.content && (
               <p
                 id={contentErrorId}
-                className="text-red-400 text-sm animate-pulse"
+                className="text-red-400 text-sm mt-2 flex items-center gap-2"
                 role="alert"
                 aria-live="assertive"
               >
+                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
                 {(errors.content as any).message}
               </p>
             )}

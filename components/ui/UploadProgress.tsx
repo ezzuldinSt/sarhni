@@ -13,8 +13,8 @@ interface UploadProgressProps {
 
 export function UploadProgress({ percentage, speed, onCancel, error }: UploadProgressProps) {
   const getStatusColor = () => {
-    if (error) return "bg-red-500";
-    if (percentage === 100) return "bg-green-500";
+    if (error) return "bg-danger";
+    if (percentage === 100) return "bg-success";
     return "bg-leather-pop";
   };
 
@@ -22,6 +22,18 @@ export function UploadProgress({ percentage, speed, onCancel, error }: UploadPro
     if (error) return "Upload failed";
     if (percentage === 100) return "Upload complete!";
     return `Uploading... ${percentage}%`;
+  };
+
+  const getStatusIconColor = () => {
+    if (error) return "text-danger";
+    if (percentage === 100) return "text-success";
+    return "text-leather-pop";
+  };
+
+  const getStatusTextColor = () => {
+    if (error) return "text-danger";
+    if (percentage === 100) return "text-success";
+    return "text-leather-accent";
   };
 
   return (
@@ -33,8 +45,8 @@ export function UploadProgress({ percentage, speed, onCancel, error }: UploadPro
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Upload size={18} className={error ? "text-red-400" : percentage === 100 ? "text-green-400" : "text-leather-pop"} />
-          <span className={`text-sm font-medium ${error ? "text-red-400" : percentage === 100 ? "text-green-400" : "text-leather-accent"}`}>
+          <Upload size={18} className={getStatusIconColor()} />
+          <span className={`text-sm font-medium ${getStatusTextColor()}`}>
             {getStatusText()}
           </span>
         </div>
@@ -71,7 +83,7 @@ export function UploadProgress({ percentage, speed, onCancel, error }: UploadPro
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs text-red-400 mt-2"
+          className="text-xs text-danger mt-2"
         >
           {error}
         </motion.p>
