@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { Toaster } from "sonner";
 import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const varela = Varela_Round({
   weight: "400",
@@ -60,6 +61,7 @@ export default function RootLayout({
             unstyled: false,
           }}
         />
+        <SpeedInsights />
       </body>
     </html>
   );
