@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { checkRateLimit, getClientIP, checkRateLimitByUser } from "@/lib/rate-limit";
 import { getCachedSession } from "@/lib/auth-cached";
+import { broadcastNewConfession } from "@/lib/events";
 
 const schema = z.object({
   content: z.string().min(1, "Message cannot be empty").max(500, "Message is too long"),
@@ -64,14 +65,23 @@ export async function sendConfession(formData: FormData) {
     const session = await getCachedSession();
     const realSenderId = (!isAnonymous && session?.user?.id) ? session.user.id : null;
 
-    await prisma.confession.create({
+    // Create confession and include sender data for real-time broadcast
+    const newConfession = await prisma.confession.create({
       data: {
         content,
         receiverId,
         isAnonymous,
         senderId: realSenderId,
       },
+      include: {
+        sender: { select: { username: true, image: true } },
+        receiver: { select: { username: true } },
+      },
     });
+
+    // REAL-TIME: Broadcast to recipient's connected clients
+    // This triggers SSE push to all viewers of the recipient's profile
+    broadcastNewConfession(newConfession, receiverId);
 
     // OPTIMIZATION: Use path-based revalidation for per-user cache invalidation
     // Only the receiver's profile page needs to be refreshed

@@ -50,6 +50,45 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setHasMore(true);
   }, [initialConfessions]);
 
+  // REAL-TIME: SSE connection for receiving new confessions
+  // Only connects when the profile owner is viewing their own profile
+  useEffect(() => {
+    // Only connect SSE for profile owner viewing their own profile
+    if (!isOwner || !username) return;
+
+    // Skip if not mounted (prevents hydration issues)
+    if (!isMounted) return;
+
+    const eventSource = new EventSource(`/api/confessions/stream?userId=${userId}`);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const newConfession = JSON.parse(event.data);
+
+        // Avoid adding duplicates (e.g., from server revalidation)
+        if (existingIdsRef.current.has(newConfession.id)) {
+          return;
+        }
+
+        // Add new confession to the beginning of the feed
+        setConfessions((prev) => [newConfession, ...prev]);
+        existingIdsRef.current.add(newConfession.id);
+        offsetRef.current += 1;
+      } catch (error) {
+        console.error("Failed to parse SSE confession data:", error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [userId, isOwner, username, isMounted]);
+
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
 
