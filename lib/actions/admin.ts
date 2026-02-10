@@ -32,7 +32,7 @@ export async function toggleBan(targetUserId: string) {
   try {
     const actor = await requireRole("ADMIN");
 
-    // Check hierarchy permissions
+    // Check hierarchy permissions (already includes role hierarchy checks)
     const check = await canActOnUser(targetUserId);
     if (!check.allowed) {
       return { error: check.reason || "Unauthorized" };
@@ -44,16 +44,6 @@ export async function toggleBan(targetUserId: string) {
       select: { id: true, role: true, isBanned: true }
     });
     if (!target) return { error: "User not found" };
-
-    // HIERARCHY CHECK
-    // Admins cannot ban Admins or Owners
-    if (actor.role === "ADMIN" && (target.role === "ADMIN" || target.role === "OWNER")) {
-      return { error: "You cannot ban your superiors or peers." };
-    }
-    // Owners cannot ban other Owners
-    if (actor.role === "OWNER" && target.role === "OWNER") {
-       return { error: "You cannot ban another Owner." };
-    }
 
     // Execute
     await prisma.user.update({

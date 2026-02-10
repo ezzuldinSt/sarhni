@@ -86,7 +86,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
 
       // Filter out confessions that are currently being deleted
       // This prevents deleted confessions from briefly reappearing during polling
-      const filtered = latest.filter((c: ConfessionWithUser) => !deletingIdsRef.current.has(c.id));
+      const filtered = latest.filter(c => !deletingIdsRef.current.has(c.id));
 
       // Create a map of existing confessions for O(1) lookup
       const existingMap = new Map(confessionsRef.current.map(c => [c.id, c]));
@@ -94,7 +94,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       // Build the new list efficiently:
       // 1. Use latest data for order/pinned/replies/edits
       // 2. Preserve existing objects where no changes occurred (prevents remounting)
-      const mergedConfessions = filtered.map((latestConf: ConfessionWithUser) => {
+      const mergedConfessions = filtered.map(latestConf => {
         const existing = existingMap.get(latestConf.id);
         if (!existing) return latestConf; // New confession
 
@@ -104,8 +104,9 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
           existing.reply !== latestConf.reply ||
           existing.isPinned !== latestConf.isPinned ||
           existing.editedAt !== latestConf.editedAt ||
-          JSON.stringify(existing.sender) !== JSON.stringify(latestConf.sender) ||
-          JSON.stringify(existing.receiver) !== JSON.stringify(latestConf.receiver);
+          existing.sender?.username !== latestConf.sender?.username ||
+          existing.sender?.image !== latestConf.sender?.image ||
+          existing.receiver?.username !== latestConf.receiver?.username;
 
         return dataChanged ? latestConf : existing;
       });
@@ -116,7 +117,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       }
 
       // Update tracking refs
-      const latestIds = new Set(filtered.map((c: ConfessionWithUser) => c.id));
+      const latestIds = new Set(filtered.map(c => c.id));
       existingIdsRef.current = latestIds;
       offsetRef.current = filtered.length;
 
@@ -195,8 +196,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       if (newConfessions.length === 0) {
         setHasMore(false);
       } else {
-        const uniqueNew = newConfessions.filter((c: ConfessionWithUser) => !existingIdsRef.current.has(c.id));
-        uniqueNew.forEach((c: ConfessionWithUser) => existingIdsRef.current.add(c.id));
+        const uniqueNew = newConfessions.filter(c => !existingIdsRef.current.has(c.id));
+        uniqueNew.forEach(c => existingIdsRef.current.add(c.id));
         offsetRef.current += uniqueNew.length;
 
         if (uniqueNew.length > 0) {
@@ -271,6 +272,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
               currentUserId={currentUserId}
               onDeletingStart={registerDeleting}
               onDeletingEnd={unregisterDeleting}
+              onActionComplete={() => refetchConfessions(true)}
             />
           </article>
         ))}

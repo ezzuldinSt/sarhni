@@ -18,9 +18,10 @@ interface ConfessionCardProps {
   currentUserId?: string;
   onDeletingStart?: (id: string) => void;
   onDeletingEnd?: (id: string) => void;
+  onActionComplete?: () => void;
 }
 
-function ConfessionCardInner({ confession, index, isOwnerView = false, isSentView = false, currentUserId, onDeletingStart, onDeletingEnd }: ConfessionCardProps) {
+function ConfessionCardInner({ confession, index, isOwnerView = false, isSentView = false, currentUserId, onDeletingStart, onDeletingEnd, onActionComplete }: ConfessionCardProps) {
   const date = new Date(confession.createdAt).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -84,6 +85,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
     handlePin,
     handleReply
   } = useConfessionActions(confession.isPinned, confession.reply, {
+    onActionComplete,
     onDeletingStart,
     onDeletingEnd
   });
