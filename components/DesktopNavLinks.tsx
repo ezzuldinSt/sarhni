@@ -5,8 +5,13 @@ import Link from "next/link";
 import { Shield, Crown } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
+import { SafeSession } from "@/lib/types";
 
-export default function DesktopNavLinks({ session }: { session: any }) {
+interface DesktopNavLinksProps {
+  session: SafeSession | null;
+}
+
+export default function DesktopNavLinks({ session }: DesktopNavLinksProps) {
   const pathname = usePathname();
 
   const isActive = (path: string) => {

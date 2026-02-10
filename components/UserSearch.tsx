@@ -6,12 +6,13 @@ import Image from "next/image";
 import { Search, Loader2 } from "lucide-react";
 import { searchUsers } from "@/lib/actions/search";
 import { EmptySearchResults } from "./ui/EmptyState";
+import { UserSearchResult } from "@/lib/types";
 
 // We accept className so we can style it differently for Mobile vs Desktop
 // onSelect is called when a user is selected (useful for closing mobile menu)
 export default function UserSearch({ className, onSelect }: { className?: string; onSelect?: () => void }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<UserSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { createRateLimiter, getClientIP } from "@/lib/rate-limit";
 import { signIn } from "@/lib/auth";
+import { FormState } from "@/lib/types";
 
 // Rate limiter for registration: 3 attempts per hour per IP
 const checkRegistrationRateLimit = createRateLimiter(3, 60 * 60 * 1000);
@@ -18,7 +19,7 @@ const registerSchema = z.object({
   password: z.string().min(6),
 });
 
-export async function registerUser(prevState: any, formData: FormData) {
+export async function registerUser(prevState: FormState | null, formData: FormData): Promise<FormState | never> {
   // Get IP address for rate limiting using centralized utility
   const ip = await getClientIP();
 
@@ -69,7 +70,7 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export async function loginUser(prevState: any, formData: FormData) {
+export async function loginUser(prevState: FormState | null, formData: FormData): Promise<FormState> {
   // Get IP address for rate limiting using centralized utility
   const ip = await getClientIP();
 

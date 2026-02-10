@@ -86,7 +86,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
 
       // Filter out confessions that are currently being deleted
       // This prevents deleted confessions from briefly reappearing during polling
-      const filtered = latest.filter((c: any) => !deletingIdsRef.current.has(c.id));
+      const filtered = latest.filter((c: ConfessionWithUser) => !deletingIdsRef.current.has(c.id));
 
       // Create a map of existing confessions for O(1) lookup
       const existingMap = new Map(confessionsRef.current.map(c => [c.id, c]));
@@ -94,7 +94,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       // Build the new list efficiently:
       // 1. Use latest data for order/pinned/replies/edits
       // 2. Preserve existing objects where no changes occurred (prevents remounting)
-      const mergedConfessions = filtered.map((latestConf: any) => {
+      const mergedConfessions = filtered.map((latestConf: ConfessionWithUser) => {
         const existing = existingMap.get(latestConf.id);
         if (!existing) return latestConf; // New confession
 
@@ -116,7 +116,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       }
 
       // Update tracking refs
-      const latestIds = new Set(filtered.map((c: any) => c.id));
+      const latestIds = new Set(filtered.map((c: ConfessionWithUser) => c.id));
       existingIdsRef.current = latestIds;
       offsetRef.current = filtered.length;
 
@@ -195,8 +195,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       if (newConfessions.length === 0) {
         setHasMore(false);
       } else {
-        const uniqueNew = newConfessions.filter((c: any) => !existingIdsRef.current.has(c.id));
-        uniqueNew.forEach((c: any) => existingIdsRef.current.add(c.id));
+        const uniqueNew = newConfessions.filter((c: ConfessionWithUser) => !existingIdsRef.current.has(c.id));
+        uniqueNew.forEach((c: ConfessionWithUser) => existingIdsRef.current.add(c.id));
         offsetRef.current += uniqueNew.length;
 
         if (uniqueNew.length > 0) {
@@ -261,7 +261,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     <section aria-label="Confessions feed">
       {/* 1. The List */}
       <div className={listClassName}>
-        {confessions.map((confession: any, i: number) => (
+        {confessions.map((confession: ConfessionWithUser, i: number) => (
           <article key={confession.id}>
             <ConfessionCard
               confession={confession}
