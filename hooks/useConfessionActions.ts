@@ -3,11 +3,20 @@ import { toastSuccess, toastError } from "@/lib/toast";
 import { deleteConfession, togglePin, replyToConfession } from "@/lib/actions/manage";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
-export function useConfessionActions(initialPinned: boolean, initialReply: string | null) {
+interface UseConfessionActionsOptions {
+  onActionComplete?: () => void;
+}
+
+export function useConfessionActions(
+  initialPinned: boolean,
+  initialReply: string | null,
+  options?: UseConfessionActionsOptions
+) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPinned, setIsPinned] = useState(initialPinned);
   const [optimisticReply, setOptimisticReply] = useState(initialReply);
   const { confirm } = useConfirmDialog();
+  const { onActionComplete } = options || {};
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
@@ -26,6 +35,7 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
       toastError(res.error);
     } else {
       toastSuccess("Message deleted.");
+      onActionComplete?.();
     }
     setIsDeleting(false);
   };
@@ -39,6 +49,7 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
       setIsPinned(!newState);
     } else {
       toastSuccess(newState ? "Pinned!" : "Unpinned.");
+      onActionComplete?.();
     }
   };
 
@@ -57,6 +68,7 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
     } else {
       toastSuccess("Replied!");
       onClose();
+      onActionComplete?.();
     }
   };
 

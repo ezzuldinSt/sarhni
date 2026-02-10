@@ -25,6 +25,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   const existingIdsRef = useRef(new Set(initialConfessions.map(c => c.id)));
   const [isMounted, setIsMounted] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefetchingRef = useRef(false);
 
   // Fix hydration issue by ensuring window is accessed only after mount
   useEffect(() => {
@@ -39,6 +41,9 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
 
@@ -50,46 +55,74 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setHasMore(true);
   }, [initialConfessions]);
 
-  // REAL-TIME: Poll for new confessions every 3 seconds
-  // This is more reliable than SSE in serverless environments
+  // REAL-TIME: Refetch function for immediate updates after user actions
+  const refetchConfessions = useCallback(async (immediate = false) => {
+    // Prevent concurrent refetches
+    if (isRefetchingRef.current && !immediate) return;
+
+    try {
+      isRefetchingRef.current = true;
+
+      // Fetch all confessions (first page) - this gives us the current state
+      const latest = await fetchConfessions(userId, 0);
+
+      // Update state with the fresh data
+      // This handles: new confessions, deleted confessions, pinned status changes, replies, edits
+      setConfessions(latest);
+
+      // Update tracking refs
+      const latestIds = new Set(latest.map((c: any) => c.id));
+      existingIdsRef.current = latestIds;
+      offsetRef.current = latest.length;
+
+      // Update hasMore based on whether we got a full page
+      setHasMore(latest.length >= 12);
+    } catch (error) {
+      // Silently fail on polling errors
+    } finally {
+      isRefetchingRef.current = false;
+    }
+  }, [userId]);
+
+  // REAL-TIME: Smart polling for all profile changes (new, deleted, pinned, replied)
+  // - Polls every 5 seconds to reduce server load
+  // - Only polls when tab is visible (visibility API)
+  // - Replaces the full list to catch all changes (delete, pin, reply, edit)
+  // - Can be triggered immediately after user actions for instant feedback
   useEffect(() => {
-    // Only poll on profile pages, not on sent/dashboards views
     if (!isMounted) return;
 
-    const pollForNewConfessions = async () => {
-      try {
-        // Fetch latest confessions (first page)
-        const latest = await fetchConfessions(userId, 0);
-
-        // Filter to only new confessions we don't have yet
-        const newConfessions = latest.filter((c: any) => !existingIdsRef.current.has(c.id));
-
-        if (newConfessions.length > 0) {
-          // Sort by createdAt descending (newest first)
-          newConfessions.sort((a: any, b: any) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-
-          // Add to the beginning of the feed
-          newConfessions.forEach((c: any) => existingIdsRef.current.add(c.id));
-          setConfessions((prev) => [...newConfessions, ...prev]);
-          offsetRef.current += newConfessions.length;
+    // Only poll when tab is visible to reduce server load
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab is hidden, pause polling
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
         }
-      } catch (error) {
-        // Silently fail on polling errors to avoid spamming the console
+      } else {
+        // Tab is visible, resume polling and fetch immediately
+        refetchConfessions(true);
+        if (!pollingIntervalRef.current) {
+          pollingIntervalRef.current = setInterval(() => refetchConfessions(), 5000);
+        }
       }
     };
 
-    // Poll every 3 seconds
-    const intervalId = setInterval(pollForNewConfessions, 3000);
+    // Set up visibility listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Also poll immediately on mount to catch any updates since page load
-    pollForNewConfessions();
+    // Start polling and fetch immediately
+    refetchConfessions(true);
+    pollingIntervalRef.current = setInterval(() => refetchConfessions(), 5000);
 
     return () => {
-      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
-  }, [userId, isMounted]);
+  }, [userId, isMounted, refetchConfessions]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
@@ -181,6 +214,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
               isOwnerView={isOwner}
               isSentView={isSentView}
               currentUserId={currentUserId}
+              onActionComplete={refetchConfessions}
             />
           </article>
         ))}
