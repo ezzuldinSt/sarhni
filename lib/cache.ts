@@ -1,20 +1,26 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
-// --- Cache Tag Constants ---
-// These are used for constructing per-user cache invalidation tags
+// ============================================================================
+// CACHE TAG CONSTANTS
+// ============================================================================
+
+// Static cache tags used for global invalidation
+// For per-user invalidation, we use revalidatePath() in Server Actions
 export const CacheTags = {
-  userProfile: (username: string) => `user-${username}`,
-  userConfessions: (userId: string) => `confessions-${userId}`,
   adminUsers: "admin-users",
   search: "user-search",
+  // Note: Per-user caches use revalidatePath() instead of tags
+  // because unstable_cache doesn't support dynamic tag generation
 } as const;
 
-// --- Cached Queries ---
+// ============================================================================
+// CACHED QUERIES
+// ============================================================================
 
 // User header data (no confessions) — fast, long cache
 // Cache automatically differentiates by username argument
-// Use per-user tags for granular invalidation
+// Invalidation: Use revalidatePath(`/u/${username}`, "page") in Server Actions
 export const getCachedUserHeader = unstable_cache(
   async (username: string) => {
     return prisma.user.findUnique({
@@ -25,15 +31,15 @@ export const getCachedUserHeader = unstable_cache(
   ["user-header"],
   {
     revalidate: 120,
-    // Use array of tag strings for Next.js cache system
-    // Server Actions will revalidate specific user tags like "user-username"
+    // Using a global tag - invalidated when any user profile changes
+    // For per-user invalidation, Server Actions use revalidatePath()
     tags: ["user-profiles"]
   }
 );
 
 // User confessions — separate query for Suspense streaming
 // Cache automatically differentiates by userId argument
-// Use per-user tags for granular invalidation
+// Invalidation: Use revalidatePath(`/u/${username}`, "page") in Server Actions
 export const getCachedUserConfessions = unstable_cache(
   async (userId: string) => {
     return prisma.confession.findMany({
@@ -52,14 +58,15 @@ export const getCachedUserConfessions = unstable_cache(
   ["user-confessions"],
   {
     revalidate: 60,
-    // Use array of tag strings for Next.js cache system
-    // Server Actions will revalidate specific user tags like "confessions-userId"
-    tags: ["user-confessions-cache"]
+    // Using a global tag - invalidated when confessions change
+    // For per-user invalidation, Server Actions use revalidatePath()
+    tags: ["user-confessions"]
   }
 );
 
 // User metadata for SEO/metadata generation
 // Cache automatically differentiates by username argument
+// Invalidation: Use revalidatePath(`/u/${username}`, "page") in Server Actions
 export const getCachedUserMeta = unstable_cache(
   async (username: string) => {
     return prisma.user.findUnique({
@@ -70,10 +77,15 @@ export const getCachedUserMeta = unstable_cache(
   ["user-meta"],
   {
     revalidate: 300,
-    // Use array of tag strings for Next.js cache system
+    // Using a global tag - invalidated when user metadata changes
+    // For per-user invalidation, Server Actions use revalidatePath()
     tags: ["user-profiles"]
   }
 );
+
+// ============================================================================
+// ADMIN CACHED QUERIES
+// ============================================================================
 
 // OPTIMIZATION: Support pagination for admin users to reduce payload size
 // Global tag is appropriate here - admin changes affect all admin views
@@ -101,6 +113,10 @@ export const getCachedAdminUsers = unstable_cache(
   ["admin-users"],
   { revalidate: 30, tags: ["admin-users"] }
 );
+
+// ============================================================================
+// SEARCH CACHED QUERIES
+// ============================================================================
 
 // Global search results cache
 // Global tag is appropriate here - profile changes should refresh search results

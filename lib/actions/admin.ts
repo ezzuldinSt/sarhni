@@ -1,20 +1,16 @@
 "use server";
 
-import { getCachedSession } from "@/lib/auth-cached";
+import { requireRole, canActOnUser, canDemoteLastOwner } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { getCachedAdminUsers } from "@/lib/cache";
 
-// --- HELPERS ---
-async function getCurrentRole() {
-  const session = await getCachedSession();
-  return session?.user?.role || "USER"; // Default to USER
-}
+// ============================================================================
+// USER MANAGEMENT (GET)
+// ============================================================================
 
-// --- 1. USER MANAGEMENT (GET) ---
 export async function getAllUsers(query: string = "") {
-  const role = await getCurrentRole();
-  if (role !== "ADMIN" && role !== "OWNER") return [];
+  const user = await requireRole("ADMIN");
 
   // OPTIMIZATION: Handle new paginated return format
   const result = await getCachedAdminUsers(query);
@@ -24,28 +20,22 @@ export async function getAllUsers(query: string = "") {
 
 // OPTIMIZATION: Paginated admin users with total count
 export async function getPaginatedUsers(query: string = "", limit: number = 20, offset: number = 0) {
-  const role = await getCurrentRole();
-  if (role !== "ADMIN" && role !== "OWNER") return { users: [], total: 0 };
-
+  await requireRole("ADMIN");
   return await getCachedAdminUsers(query, limit, offset);
 }
 
-// --- 2. BAN HAMMER ---
+// ============================================================================
+// BAN HAMMER
+// ============================================================================
+
 export async function toggleBan(targetUserId: string) {
   try {
-    const session = await getCachedSession();
-    const actorRole = session?.user?.role;
+    const actor = await requireRole("ADMIN");
 
-    if (actorRole !== "ADMIN" && actorRole !== "OWNER") return { error: "Unauthorized" };
-
-    // Explicit ban check - admins/owners can't act if banned
-    const actor = await prisma.user.findUnique({
-      where: { id: session!.user.id },
-      select: { isBanned: true }
-    });
-
-    if (actor?.isBanned) {
-      return { error: "Account banned." };
+    // Check hierarchy permissions
+    const check = await canActOnUser(targetUserId);
+    if (!check.allowed) {
+      return { error: check.reason || "Unauthorized" };
     }
 
     // Fetch target
@@ -57,11 +47,11 @@ export async function toggleBan(targetUserId: string) {
 
     // HIERARCHY CHECK
     // Admins cannot ban Admins or Owners
-    if (actorRole === "ADMIN" && (target.role === "ADMIN" || target.role === "OWNER")) {
+    if (actor.role === "ADMIN" && (target.role === "ADMIN" || target.role === "OWNER")) {
       return { error: "You cannot ban your superiors or peers." };
     }
-    // Owners cannot ban other Owners (if you had multiple)
-    if (actorRole === "OWNER" && target.role === "OWNER") {
+    // Owners cannot ban other Owners
+    if (actor.role === "OWNER" && target.role === "OWNER") {
        return { error: "You cannot ban another Owner." };
     }
 
@@ -71,7 +61,6 @@ export async function toggleBan(targetUserId: string) {
       data: { isBanned: !target.isBanned }
     });
 
-    // OPTIMIZATION: Tag-based revalidation is sufficient
     revalidateTag("admin-users", {});
     revalidateTag("user-search", {});
     return { success: true };
@@ -81,23 +70,13 @@ export async function toggleBan(targetUserId: string) {
   }
 }
 
-// --- 3. ROLE MANAGEMENT (OWNER ONLY) ---
-export async function updateUserRole(targetUserId: string, newRole: "USER" | "ADMIN") {
+// ============================================================================
+// ROLE MANAGEMENT (OWNER ONLY)
+// ============================================================================
+
+export async function updateUserRole(targetUserId: string, newRole: "USER" | "ADMIN" | "OWNER") {
   try {
-    const role = await getCurrentRole();
-
-    if (role !== "OWNER") return { error: "Only the Owner can promote users." };
-
-    // Explicit ban check - owners can't act if banned
-    const session = await getCachedSession();
-    const owner = await prisma.user.findUnique({
-      where: { id: session!.user.id },
-      select: { isBanned: true }
-    });
-
-    if (owner?.isBanned) {
-      return { error: "Account banned." };
-    }
+    const owner = await requireRole("OWNER");
 
     // Fetch target user's current role to check if we're demoting an OWNER
     const targetUser = await prisma.user.findUnique({
@@ -109,11 +88,11 @@ export async function updateUserRole(targetUserId: string, newRole: "USER" | "AD
       return { error: "User not found." };
     }
 
-    // Only prevent demoting the last owner
-    if (targetUser.role === "OWNER") {
-      const ownerCount = await prisma.user.count({ where: { role: "OWNER" } });
-      if (ownerCount <= 1) {
-        return { error: "Cannot demote the last owner." };
+    // Check if we can demote this owner
+    if (targetUser.role === "OWNER" && newRole !== "OWNER") {
+      const canDemote = await canDemoteLastOwner(targetUserId);
+      if (!canDemote.allowed) {
+        return { error: canDemote.reason };
       }
     }
 
@@ -122,7 +101,6 @@ export async function updateUserRole(targetUserId: string, newRole: "USER" | "AD
       data: { role: newRole }
     });
 
-    // OPTIMIZATION: Tag-based revalidation is sufficient
     revalidateTag("admin-users", {});
     return { success: true };
   } catch (error) {
@@ -131,21 +109,12 @@ export async function updateUserRole(targetUserId: string, newRole: "USER" | "AD
   }
 }
 
-// --- 4. NUCLEAR OPTION (OWNER ONLY) ---
+// ============================================================================
+// NUCLEAR OPTION (OWNER ONLY)
+// ============================================================================
+
 export async function deleteUserCompletely(targetUserId: string) {
-  const role = await getCurrentRole();
-  if (role !== "OWNER") return { error: "Only the Owner can delete users." };
-
-  // Explicit ban check - owners can't act if banned
-  const session = await getCachedSession();
-  const owner = await prisma.user.findUnique({
-    where: { id: session!.user.id },
-    select: { isBanned: true }
-  });
-
-  if (owner?.isBanned) {
-    return { error: "Account banned." };
-  }
+  const actor = await requireRole("OWNER");
 
   try {
     // Cascade delete is usually handled by Prisma relations,
@@ -162,7 +131,6 @@ export async function deleteUserCompletely(targetUserId: string) {
 
     await prisma.$transaction([deleteConfessions, deleteUser]);
 
-    // OPTIMIZATION: Tag-based revalidation is sufficient
     revalidateTag("admin-users", {});
     revalidateTag("user-search", {});
     revalidateTag("user-profiles", {});
@@ -179,4 +147,3 @@ export async function deleteUserCompletely(targetUserId: string) {
     return { error: "An unexpected error occurred while deleting the user." };
   }
 }
-
