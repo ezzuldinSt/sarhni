@@ -51,10 +51,10 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   }, [initialConfessions]);
 
   // REAL-TIME: SSE connection for receiving new confessions
-  // Only connects when the profile owner is viewing their own profile
+  // Connects for anyone viewing a profile (owner or visitor)
   useEffect(() => {
-    // Only connect SSE for profile owner viewing their own profile
-    if (!isOwner || !username) return;
+    // Need username to construct SSE URL
+    if (!username) return;
 
     // Skip if not mounted (prevents hydration issues)
     if (!isMounted) return;
@@ -87,7 +87,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     return () => {
       eventSource.close();
     };
-  }, [userId, isOwner, username, isMounted]);
+  }, [userId, username, isMounted]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
