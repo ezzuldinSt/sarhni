@@ -16,10 +16,9 @@ interface ConfessionCardProps {
   isOwnerView?: boolean;
   isSentView?: boolean;
   currentUserId?: string;
-  onActionComplete?: () => void;
 }
 
-function ConfessionCardInner({ confession, index, isOwnerView = false, isSentView = false, currentUserId, onActionComplete }: ConfessionCardProps) {
+function ConfessionCardInner({ confession, index, isOwnerView = false, isSentView = false, currentUserId }: ConfessionCardProps) {
   const date = new Date(confession.createdAt).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -82,7 +81,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
     handleDelete,
     handlePin,
     handleReply
-  } = useConfessionActions(confession.isPinned, confession.reply, { onActionComplete });
+  } = useConfessionActions(confession.isPinned, confession.reply);
 
   // --- 1. Share Logic (Kept Local due to Ref) ---
   const handleShare = async () => {
@@ -139,7 +138,6 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
     } else {
       toastSuccess("Message edited!");
       setIsEditing(false);
-      onActionComplete?.();
     }
   };
 

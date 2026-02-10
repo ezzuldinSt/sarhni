@@ -27,6 +27,12 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   const abortControllerRef = useRef<AbortController | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefetchingRef = useRef(false);
+  const confessionsRef = useRef(confessions);
+
+  // Keep the ref in sync with state
+  useEffect(() => {
+    confessionsRef.current = confessions;
+  }, [confessions]);
 
   // Fix hydration issue by ensuring window is accessed only after mount
   useEffect(() => {
@@ -56,6 +62,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   }, [initialConfessions]);
 
   // REAL-TIME: Refetch function for immediate updates after user actions
+  // Uses smart diffing to avoid visual glitches from reordering
   const refetchConfessions = useCallback(async (immediate = false) => {
     // Prevent concurrent refetches
     if (isRefetchingRef.current && !immediate) return;
@@ -66,9 +73,32 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       // Fetch all confessions (first page) - this gives us the current state
       const latest = await fetchConfessions(userId, 0);
 
-      // Update state with the fresh data
-      // This handles: new confessions, deleted confessions, pinned status changes, replies, edits
-      setConfessions(latest);
+      // Create a map of existing confessions for O(1) lookup
+      const existingMap = new Map(confessionsRef.current.map(c => [c.id, c]));
+
+      // Build the new list efficiently:
+      // 1. Use latest data for order/pinned/replies/edits
+      // 2. Preserve existing objects where no changes occurred (prevents remounting)
+      const mergedConfessions = latest.map((latestConf: any) => {
+        const existing = existingMap.get(latestConf.id);
+        if (!existing) return latestConf; // New confession
+
+        // Check if any data changed (content, reply, pinned, etc.)
+        const dataChanged =
+          existing.content !== latestConf.content ||
+          existing.reply !== latestConf.reply ||
+          existing.isPinned !== latestConf.isPinned ||
+          existing.editedAt !== latestConf.editedAt ||
+          JSON.stringify(existing.sender) !== JSON.stringify(latestConf.sender) ||
+          JSON.stringify(existing.receiver) !== JSON.stringify(latestConf.receiver);
+
+        return dataChanged ? latestConf : existing;
+      });
+
+      // Update state only if there are actual changes
+      if (JSON.stringify(mergedConfessions) !== JSON.stringify(confessionsRef.current)) {
+        setConfessions(mergedConfessions);
+      }
 
       // Update tracking refs
       const latestIds = new Set(latest.map((c: any) => c.id));
@@ -214,7 +244,6 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
               isOwnerView={isOwner}
               isSentView={isSentView}
               currentUserId={currentUserId}
-              onActionComplete={refetchConfessions}
             />
           </article>
         ))}
