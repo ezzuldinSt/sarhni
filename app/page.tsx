@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { getCachedSession } from "@/lib/auth-cached";
-import { MessageCircle, Shield, Share2, Heart, Lock } from "lucide-react";
+import { Lock, Heart, Shield, Share2, MessageCircle } from "@/components/ui/Icon";
 import { GlitchText } from "@/components/ui/GlitchText";
 
 export default async function Home() {

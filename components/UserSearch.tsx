@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "@/components/ui/Icon";
 import { searchUsers } from "@/lib/actions/search";
 import { EmptySearchResults } from "./ui/EmptyState";
 

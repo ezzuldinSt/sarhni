@@ -8,6 +8,10 @@ import { Card } from "@/components/ui/Card";
 import Image from "next/image";
 import ConfessionFeed from "@/components/ConfessionFeed";
 import type { Metadata } from "next";
+import { getBlurPlaceholder } from "@/lib/image-blur";
+
+// PERFORMANCE: Pre-generated blur placeholder for avatar images
+const AVATAR_BLUR_URL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%232C1A1D'/%3E%3C/svg%3E";
 
 // ISR: Revalidate profile pages every 60 seconds
 // This reduces database hits while keeping content reasonably fresh
@@ -65,6 +69,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
                  className="object-cover"
                  priority
                  placeholder="blur"
+                 blurDataURL={AVATAR_BLUR_URL}
                />
             </div>
             <h1 className="text-page-title text-leather-accent mb-2">@{user.username}</h1>

@@ -6,12 +6,15 @@ import { Toaster } from "sonner";
 import { ConfirmDialogProvider } from "@/components/ui/ConfirmDialog";
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ResourceHints } from "@/components/ResourceHints";
 
+// PERFORMANCE: Use "optional" for faster FCP - font loads instantly or falls back to system font
 const varela = Varela_Round({
   weight: "400",
   subsets: ["latin"],
-  display: "swap",
+  display: "optional",
   variable: "--font-varela",
+  preload: true, // Preload font for faster render
 });
 
 export const metadata: Metadata = {
@@ -20,6 +23,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
+  },
+  // PERFORMANCE: Resource hints for faster connections
+  other: {
+    "x-dns-prefetch-control": "on",
   },
   openGraph: {
     title: "Sarhni - Confess Freely",
@@ -41,6 +48,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <ResourceHints />
+      </head>
       <body className={`${varela.className} ${varela.variable} bg-leather-900 text-leather-accent min-h-screen relative`}>
         <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-leather-texture z-base bg-repeat" />
         <Navbar />

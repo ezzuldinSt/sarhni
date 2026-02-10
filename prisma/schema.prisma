@@ -54,7 +54,10 @@ model User {
   reports             Report[]
   reviewedReports    Report[] @relation("ReviewReports")
 
+  // PERFORMANCE: Index for username lookups (already present)
+  // Additional composite indexes for common queries
   @@index([username])
+  @@index([role, isBanned]) // For admin dashboard queries
 }
 
 model Confession {
@@ -75,10 +78,14 @@ model Confession {
 
   reports     Report[]
 
-  @@index([receiverId])
-  @@index([senderId])
-  @@index([senderId, createdAt])
-  @@index([receiverId, isPinned, createdAt])
+  // PERFORMANCE: Composite indexes for optimized queries
+  @@index([receiverId]) // Basic lookup
+  @@index([senderId]) // Basic lookup
+  @@index([receiverId, createdAt(sort: Desc)]) // Inbox sorting
+  @@index([senderId, createdAt(sort: Desc)]) // Sent messages sorting
+  @@index([receiverId, isPinned, createdAt(sort: Desc)]) // Pinned first, then by date
+  @@index([receiverId, reply]) // Counting replied/unreplied
+  @@index([createdAt(sort: Desc)]) // For global timelines (if needed)
 }
 
 model Report {

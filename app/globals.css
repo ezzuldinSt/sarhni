@@ -78,4 +78,96 @@
   .animate-spin-fast {
     animation: spin 1s linear infinite;
   }
+
+  /* PERFORMANCE: Optimize animations with will-change */
+  .will-spin {
+    will-change: transform;
+  }
+
+  /* PERFORMANCE: Content visibility for off-screen content */
+  .lazy-render {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* PERFORMANCE: CSS-based animations to replace framer-motion where possible */
+  .fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  .scale-in {
+    animation: scaleIn 0.2s ease-out forwards;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Modal backdrop fade */
+  .modal-backdrop-in {
+    animation: modalBackdropFadeIn 0.2s ease-out forwards;
+  }
+
+  @keyframes modalBackdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* PERFORMANCE: Hardware acceleration hints */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+  }
 }

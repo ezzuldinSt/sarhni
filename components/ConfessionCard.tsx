@@ -1,14 +1,67 @@
 "use client";
 
-import { memo, useRef, useState, useEffect } from "react";
+import { memo, useRef, useState, useEffect, useReducer, useCallback, startTransition } from "react";
 import Link from "next/link";
 import { Card } from "./ui/Card";
-import { Share2, Loader2, Trash2, MessageCircle, Pin, Edit3, X, Check, Flag } from "lucide-react";
+import { Share2, Loader2, Trash2, MessageCircle, Pin, Edit3, X, Check, Flag } from "@/components/ui/Icon";
 import { toastSuccess, toastError, toastLoading } from "@/lib/toast";
 import { ConfessionSticker } from "./ConfessionSticker";
 import { useConfessionActions } from "@/hooks/useConfessionActions";
 import { ConfessionWithUser } from "@/lib/types";
 import { useReportDialog } from "./ReportDialog";
+
+// PERFORMANCE: Reducer for batching related UI state updates
+// This reduces re-renders by combining state changes into single updates
+interface CardState {
+  isGenerating: boolean;
+  isReplying: boolean;
+  replyText: string;
+  isEditing: boolean;
+  editText: string;
+  timeRemaining: string;
+}
+
+type CardAction =
+  | { type: "SET_GENERATING"; payload: boolean }
+  | { type: "SET_REPLYING"; payload: boolean }
+  | { type: "SET_REPLY_TEXT"; payload: string }
+  | { type: "SET_EDITING"; payload: boolean }
+  | { type: "SET_EDIT_TEXT"; payload: string }
+  | { type: "SET_TIME_REMAINING"; payload: string }
+  | { type: "RESET_EDIT_TEXT" }
+  | { type: "RESET_REPLY" };
+
+const initialState = (confessionContent: string): CardState => ({
+  isGenerating: false,
+  isReplying: false,
+  replyText: "",
+  isEditing: false,
+  editText: confessionContent,
+  timeRemaining: "",
+});
+
+function cardReducer(state: CardState, action: CardAction): CardState {
+  switch (action.type) {
+    case "SET_GENERATING":
+      return { ...state, isGenerating: action.payload };
+    case "SET_REPLYING":
+      return { ...state, isReplying: action.payload };
+    case "SET_REPLY_TEXT":
+      return { ...state, replyText: action.payload };
+    case "SET_EDITING":
+      return { ...state, isEditing: action.payload };
+    case "SET_EDIT_TEXT":
+      return { ...state, editText: action.payload };
+    case "SET_TIME_REMAINING":
+      return { ...state, timeRemaining: action.payload };
+    case "RESET_EDIT_TEXT":
+      return { ...state, editText: initialState("").editText };
+    case "RESET_REPLY":
+      return { ...state, replyText: "", isReplying: false };
+    default:
+      return state;
+  }
+}
 
 interface ConfessionCardProps {
   confession: ConfessionWithUser;
@@ -28,13 +81,9 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
   });
   const stickerRef = useRef<HTMLDivElement>(null);
 
-  // -- Local UI State --
-  const [isGenerating, setIsGenerating] = useState(false); // Sharing
-  const [isReplying, setIsReplying] = useState(false);     // Toggling Reply Form
-  const [replyText, setReplyText] = useState("");          // Reply Input
-  const [isEditing, setIsEditing] = useState(false);       // Editing state
-  const [editText, setEditText] = useState(confession.content); // Edit Input
-  const [timeRemaining, setTimeRemaining] = useState<string>(""); // Edit countdown
+  // -- PERFORMANCE: useReducer for batching related state updates --
+  const [state, dispatch] = useReducer(cardReducer, initialState(confession.content));
+  const { isGenerating, isReplying, replyText, isEditing, editText, timeRemaining } = state;
 
   // -- Report Dialog --
   const { ReportDialog, isOpen: isReportOpen, open: openReport, close: closeReport } = useReportDialog();
@@ -48,7 +97,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
   // -- Edit Countdown Timer --
   useEffect(() => {
     if (!isWithinEditWindow) {
-      setTimeRemaining("");
+      dispatch({ type: "SET_TIME_REMAINING", payload: "" });
       return;
     }
 
@@ -58,13 +107,16 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
       const remaining = Math.max(0, fiveMinutes - elapsed);
 
       if (remaining <= 0) {
-        setTimeRemaining("");
+        dispatch({ type: "SET_TIME_REMAINING", payload: "" });
         return;
       }
 
       const minutes = Math.floor(remaining / 60000);
       const seconds = Math.floor((remaining % 60000) / 1000);
-      setTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      // PERFORMANCE: Use startTransition for non-critical updates
+      startTransition(() => {
+        dispatch({ type: "SET_TIME_REMAINING", payload: `${minutes}:${seconds.toString().padStart(2, '0')}` });
+      });
     };
 
     updateCountdown();
@@ -84,19 +136,31 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
   } = useConfessionActions(confession.isPinned, confession.reply);
 
   // --- 1. Share Logic (Kept Local due to Ref) ---
-  const handleShare = async () => {
+  // PERFORMANCE: Wrap in useCallback to prevent recreating on every render
+  const handleShare = useCallback(async () => {
     if (!stickerRef.current || isGenerating) return;
 
-    setIsGenerating(true);
+    dispatch({ type: "SET_GENERATING", payload: true });
     const loading = toastLoading("Generating sticker...", { id: "sticker-toast" });
 
     try {
+      // PERFORMANCE: Dynamic import reduces initial bundle
       const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(stickerRef.current, {
-        backgroundColor: "#2C1A1D", // leather-900 - keeping hex for html2canvas compatibility
-        scale: 2, // High resolution
-        logging: false,
-        useCORS: true
+
+      // PERFORMANCE: Use requestIdleCallback for non-critical work
+      const canvas = await new Promise<HTMLCanvasElement>((resolve, reject) => {
+        // Use setTimeout to yield to the browser for painting
+        setTimeout(() => {
+          html2canvas(stickerRef.current!, {
+            backgroundColor: "#2C1A1D", // leather-900 - keeping hex for html2canvas compatibility
+            scale: 2, // High resolution
+            logging: false,
+            useCORS: true,
+            // PERFORMANCE: Disable expensive features
+            allowTaint: false,
+            foreignObjectRendering: false,
+          }).then(resolve).catch(reject);
+        }, 0);
       });
 
       canvas.toBlob((blob) => {
@@ -110,19 +174,20 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
         URL.revokeObjectURL(url);
 
         toastSuccess("Sticker saved!", { id: "sticker-toast" });
+        // PERFORMANCE: Batch state updates
+        dispatch({ type: "SET_GENERATING", payload: false });
       }, 'image/jpeg', 0.9);
 
     } catch (error) {
       toastError("Failed to generate image.", { id: "sticker-toast" });
-    } finally {
-      setIsGenerating(false);
+      dispatch({ type: "SET_GENERATING", payload: false });
     }
-  };
+  }, [confession.id, isGenerating]);
 
   // --- 2. Reply Wrapper ---
   const onReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleReply(confession.id, replyText, () => setIsReplying(false));
+    handleReply(confession.id, replyText, () => dispatch({ type: "RESET_REPLY" }));
   };
 
   // --- 3. Edit Handler ---
@@ -137,13 +202,13 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
       toastError(result.error);
     } else {
       toastSuccess("Message edited!");
-      setIsEditing(false);
+      dispatch({ type: "SET_EDITING", payload: false });
     }
   };
 
   const handleCancelEdit = () => {
-    setEditText(confession.content);
-    setIsEditing(false);
+    dispatch({ type: "SET_EDIT_TEXT", payload: confession.content });
+    dispatch({ type: "SET_EDITING", payload: false });
   };
 
   const handleReport = () => {
@@ -167,7 +232,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
             {/* Pin Badge */}
             {isPinned && (
               <div className="bg-leather-pop text-leather-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                <Pin size={12} fill="currentColor" />
+                <Pin size={12} />
                 Pinned
               </div>
             )}
@@ -202,7 +267,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                   <span className="text-xs text-leather-100 font-medium">{timeRemaining}</span>
                 )}
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => dispatch({ type: "SET_EDITING", payload: true })}
                   aria-label="Edit message"
                   className="flex items-center justify-center p-1.5 min-h-[38px] min-w-[38px] bg-leather-800 text-leather-pop rounded-full hover:bg-leather-pop hover:text-leather-900 shadow-lg transition-colors"
                   title="Edit message (5 min window)"
@@ -220,7 +285,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
               className="flex items-center justify-center p-1.5 min-h-[38px] min-w-[38px] bg-leather-800 text-danger-light rounded-full hover:bg-danger hover:text-white shadow-lg disabled:opacity-50 transition-colors"
               title="Delete Message"
             >
-              {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin-fast" /> : <Trash2 className="w-3.5 h-3.5" />}
+              {isDeleting ? <Loader2 className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
             </button>
 
             {/* Share Button */}
@@ -231,7 +296,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
               className="flex items-center justify-center p-1.5 min-h-[38px] min-w-[38px] bg-leather-800 text-leather-pop rounded-full hover:bg-leather-pop hover:text-leather-900 shadow-lg disabled:opacity-50 transition-colors"
               title="Generate Story Sticker"
             >
-              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin-fast" /> : <Share2 className="w-3.5 h-3.5" />}
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
             </button>
 
             {/* Report Button (for logged-in users) */}
@@ -255,7 +320,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                <textarea
                  autoFocus
                  value={editText}
-                 onChange={(e) => setEditText(e.target.value)}
+                 onChange={(e) => dispatch({ type: "SET_EDIT_TEXT", payload: e.target.value })}
                  className="w-full bg-leather-900/80 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-leather-pop text-leather-accent placeholder-leather-600 min-h-20"
                  placeholder="Edit your message..."
                  maxLength={500}
@@ -309,7 +374,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
           <div className="mt-auto pt-4 pb-4 border-t border-leather-600/30">
             {!isReplying ? (
               <button
-                onClick={() => setIsReplying(true)}
+                onClick={() => dispatch({ type: "SET_REPLYING", payload: true })}
                 aria-label="Open reply form"
                 className="text-xs font-bold text-leather-100 hover:text-leather-pop flex items-center gap-2 transition-colors"
               >
@@ -323,7 +388,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                   className="bg-leather-900/80 rounded-xl p-3 text-sm w-full outline-none focus:ring-2 focus:ring-leather-pop text-leather-accent placeholder-leather-600"
                   placeholder="Type your comeback..."
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
+                  onChange={(e) => dispatch({ type: "SET_REPLY_TEXT", payload: e.target.value })}
                   maxLength={500}
                 />
                 <div className="flex items-center justify-between gap-3">
@@ -331,7 +396,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setIsReplying(false)}
+                      onClick={() => dispatch({ type: "SET_REPLYING", payload: false })}
                       className="text-xs text-leather-100 hover:text-red-400 px-3 py-2 transition-colors"
                     >
                       Cancel
@@ -375,6 +440,8 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
                   src={confession.sender.image}
                   alt={confession.sender.username}
                   className="w-avatar-sm h-avatar-sm rounded-full object-cover"
+                  style={{ backgroundColor: "#2C1A1D" }}
+                  loading="lazy"
                 />
               )}
               <div className="flex flex-col">

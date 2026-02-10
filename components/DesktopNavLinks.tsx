@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Shield, Crown } from "lucide-react";
+import { Shield, Crown } from "@/components/ui/Icon";
 import { signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
 

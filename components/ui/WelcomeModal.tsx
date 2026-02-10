@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Share2, MessageSquare, Pin, Sparkles } from "lucide-react";
+import { X, ArrowRight, Share2, MessageSquare, Pin, Sparkles } from "@/components/ui/Icon";
 import { Button } from "./Button";
 
 interface WelcomeModalProps {

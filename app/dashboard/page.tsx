@@ -4,11 +4,20 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Card";
 import ConfessionFeed from "@/components/ConfessionFeed";
 import ShareLinkCard from "@/components/ShareLinkCard";
-import WelcomeModalWrapper from "@/components/WelcomeModalWrapper";
+import dynamic from "next/dynamic";
 import { ConfessionFeedErrorBoundary } from "@/components/ConfessionFeedErrorBoundary";
-import { Mail, Send, Inbox, Loader2, TrendingUp, MessageSquare, Heart, Pin, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Send, Inbox, TrendingUp, MessageSquare, Heart, Pin, ArrowRight, Sparkles } from "@/components/ui/Icon";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+// PERFORMANCE: Dynamic import WelcomeModalWrapper - only loads when needed
+// This reduces initial bundle size since the modal is only shown once per user
+const WelcomeModalWrapper = dynamic(
+  () => import("@/components/WelcomeModalWrapper").then(mod => ({ default: mod.default })),
+  {
+    loading: () => null, // Show nothing while loading - modal appears when ready
+  }
+);
 
 // ISR: Revalidate dashboard every 30 seconds
 // Dashboard displays user stats and recent messages

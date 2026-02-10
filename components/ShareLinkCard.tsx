@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, memo } from "react";
 import { Card } from "@/components/ui/Card";
-import { Copy, Check, Share2, Link as LinkIcon } from "lucide-react";
+import { Copy, Check, Share2, LinkIcon } from "@/components/ui/Icon";
 import { toastSuccess } from "@/lib/toast";
 
 interface ShareLinkCardProps {

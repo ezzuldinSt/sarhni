@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Menu, X, Home, User, Settings, LogOut, LayoutDashboard, Shield, Flag, Crown } from "lucide-react";
+import { Menu, X, Home, User, Settings, LogOut, LayoutDashboard, Shield, Flag, Crown } from "@/components/ui/Icon";
 import { signOut } from "next-auth/react";
 import UserSearch from "./UserSearch";
 

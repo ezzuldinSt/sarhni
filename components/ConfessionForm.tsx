@@ -9,7 +9,7 @@ import { Card } from "./ui/Card";
 import { Switch } from "./ui/Switch";
 import { sendConfession } from "@/lib/actions/confess";
 import { toastSuccess, toastError } from "@/lib/toast";
-import { Send } from "lucide-react";
+import { Send } from "@/components/ui/Icon";
 import { motion, AnimatePresence } from "framer-motion";
 
 const schema = z.object({
