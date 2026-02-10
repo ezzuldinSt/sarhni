@@ -5,6 +5,8 @@ import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface UseConfessionActionsOptions {
   onActionComplete?: () => void;
+  onDeletingStart?: (id: string) => void;
+  onDeletingEnd?: (id: string) => void;
 }
 
 export function useConfessionActions(
@@ -16,7 +18,7 @@ export function useConfessionActions(
   const [isPinned, setIsPinned] = useState(initialPinned);
   const [optimisticReply, setOptimisticReply] = useState(initialReply);
   const { confirm } = useConfirmDialog();
-  const { onActionComplete } = options || {};
+  const { onActionComplete, onDeletingStart, onDeletingEnd } = options || {};
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
@@ -30,12 +32,16 @@ export function useConfessionActions(
     if (!confirmed) return;
 
     setIsDeleting(true);
+    onDeletingStart?.(id); // Register this ID as being deleted
     const res = await deleteConfession(id);
     if (res?.error) {
       toastError(res.error);
+      onDeletingEnd?.(id); // Unregister on error
     } else {
       toastSuccess("Message deleted.");
       onActionComplete?.();
+      // Keep the ID registered for a bit to prevent it from reappearing during polling
+      setTimeout(() => onDeletingEnd?.(id), 6000);
     }
     setIsDeleting(false);
   };

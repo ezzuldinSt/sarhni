@@ -28,6 +28,7 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefetchingRef = useRef(false);
   const confessionsRef = useRef(confessions);
+  const deletingIdsRef = useRef<Set<string>>(new Set()); // Track IDs being deleted
 
   // Keep the ref in sync with state
   useEffect(() => {
@@ -83,13 +84,17 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       // Fetch all confessions (first page) - this gives us the current state
       const latest = await fetchConfessions(userId, 0);
 
+      // Filter out confessions that are currently being deleted
+      // This prevents deleted confessions from briefly reappearing during polling
+      const filtered = latest.filter((c: any) => !deletingIdsRef.current.has(c.id));
+
       // Create a map of existing confessions for O(1) lookup
       const existingMap = new Map(confessionsRef.current.map(c => [c.id, c]));
 
       // Build the new list efficiently:
       // 1. Use latest data for order/pinned/replies/edits
       // 2. Preserve existing objects where no changes occurred (prevents remounting)
-      const mergedConfessions = latest.map((latestConf: any) => {
+      const mergedConfessions = filtered.map((latestConf: any) => {
         const existing = existingMap.get(latestConf.id);
         if (!existing) return latestConf; // New confession
 
@@ -111,12 +116,12 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       }
 
       // Update tracking refs
-      const latestIds = new Set(latest.map((c: any) => c.id));
+      const latestIds = new Set(filtered.map((c: any) => c.id));
       existingIdsRef.current = latestIds;
-      offsetRef.current = latest.length;
+      offsetRef.current = filtered.length;
 
       // Update hasMore based on whether we got a full page
-      setHasMore(latest.length >= 12);
+      setHasMore(filtered.length >= 12);
     } catch (error) {
       // Silently fail on polling errors
     } finally {
@@ -242,6 +247,16 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setIsSentView(window.location.pathname === "/dashboard/sent");
   }, []);
 
+  // Callbacks for tracking deleting confessions
+  // Prevents deleted confessions from briefly reappearing during polling
+  const registerDeleting = useCallback((id: string) => {
+    deletingIdsRef.current.add(id);
+  }, []);
+
+  const unregisterDeleting = useCallback((id: string) => {
+    deletingIdsRef.current.delete(id);
+  }, []);
+
   return (
     <section aria-label="Confessions feed">
       {/* 1. The List */}
@@ -254,6 +269,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
               isOwnerView={isOwner}
               isSentView={isSentView}
               currentUserId={currentUserId}
+              onDeletingStart={registerDeleting}
+              onDeletingEnd={unregisterDeleting}
             />
           </article>
         ))}
