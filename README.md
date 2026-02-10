@@ -287,7 +287,7 @@ To keep things fair and spam-free:
 | Send message | 5 | 60 seconds |
 | Search users | 20 | 60 seconds |
 
-Based on IP address via the `x-real-ip` header.
+Based on IP address via the `x-vercel-forwarded-for` header (set by Vercel's infrastructure, cannot be spoofed).
 
 ---
 
