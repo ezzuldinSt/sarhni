@@ -8,8 +8,13 @@ import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Menu, X, Home, User, Settings, LogOut, LayoutDashboard, Shield, Flag, Crown } from "lucide-react";
 import { signOut } from "next-auth/react";
 import UserSearch from "./UserSearch";
+import { SafeSession } from "@/lib/types";
 
-export default function MobileMenu({ session }: { session: any }) {
+interface MobileMenuProps {
+  session: SafeSession | null;
+}
+
+export default function MobileMenu({ session }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();

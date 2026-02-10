@@ -25,6 +25,15 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   const existingIdsRef = useRef(new Set(initialConfessions.map(c => c.id)));
   const [isMounted, setIsMounted] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefetchingRef = useRef(false);
+  const confessionsRef = useRef(confessions);
+  const deletingIdsRef = useRef<Set<string>>(new Set()); // Track IDs being deleted
+
+  // Keep the ref in sync with state
+  useEffect(() => {
+    confessionsRef.current = confessions;
+  }, [confessions]);
 
   // Fix hydration issue by ensuring window is accessed only after mount
   useEffect(() => {
@@ -39,16 +48,126 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
 
   // Sync state when the server revalidates (e.g., after sending a message)
+  // Only sync if we don't already have data, preventing empty flashes during revalidation
   useEffect(() => {
-    setConfessions(initialConfessions);
-    offsetRef.current = initialConfessions.length;
-    existingIdsRef.current = new Set(initialConfessions.map(c => c.id));
-    setHasMore(true);
+    // Skip if we already have confessions and the new data is empty
+    // This prevents the feed from briefly emptying during revalidation
+    if (confessionsRef.current.length > 0 && initialConfessions.length === 0) {
+      return;
+    }
+
+    // Only sync if we have meaningful data or we're initializing
+    if (initialConfessions.length > 0 || confessionsRef.current.length === 0) {
+      setConfessions(initialConfessions);
+      offsetRef.current = initialConfessions.length;
+      existingIdsRef.current = new Set(initialConfessions.map(c => c.id));
+      setHasMore(true);
+    }
   }, [initialConfessions]);
+
+  // REAL-TIME: Refetch function for immediate updates after user actions
+  // Uses smart diffing to avoid visual glitches from reordering
+  const refetchConfessions = useCallback(async (immediate = false) => {
+    // Prevent concurrent refetches
+    if (isRefetchingRef.current && !immediate) return;
+
+    try {
+      isRefetchingRef.current = true;
+
+      // Fetch all confessions (first page) - this gives us the current state
+      const latest = await fetchConfessions(userId, 0);
+
+      // Filter out confessions that are currently being deleted
+      // This prevents deleted confessions from briefly reappearing during polling
+      const filtered = latest.filter((c: ConfessionWithUser) => !deletingIdsRef.current.has(c.id));
+
+      // Create a map of existing confessions for O(1) lookup
+      const existingMap = new Map(confessionsRef.current.map(c => [c.id, c]));
+
+      // Build the new list efficiently:
+      // 1. Use latest data for order/pinned/replies/edits
+      // 2. Preserve existing objects where no changes occurred (prevents remounting)
+      const mergedConfessions = filtered.map((latestConf: ConfessionWithUser) => {
+        const existing = existingMap.get(latestConf.id);
+        if (!existing) return latestConf; // New confession
+
+        // Check if any data changed (content, reply, pinned, etc.)
+        const dataChanged =
+          existing.content !== latestConf.content ||
+          existing.reply !== latestConf.reply ||
+          existing.isPinned !== latestConf.isPinned ||
+          existing.editedAt !== latestConf.editedAt ||
+          JSON.stringify(existing.sender) !== JSON.stringify(latestConf.sender) ||
+          JSON.stringify(existing.receiver) !== JSON.stringify(latestConf.receiver);
+
+        return dataChanged ? latestConf : existing;
+      });
+
+      // Update state only if there are actual changes
+      if (JSON.stringify(mergedConfessions) !== JSON.stringify(confessionsRef.current)) {
+        setConfessions(mergedConfessions);
+      }
+
+      // Update tracking refs
+      const latestIds = new Set(filtered.map((c: ConfessionWithUser) => c.id));
+      existingIdsRef.current = latestIds;
+      offsetRef.current = filtered.length;
+
+      // Update hasMore based on whether we got a full page
+      setHasMore(filtered.length >= 12);
+    } catch (error) {
+      // Silently fail on polling errors
+    } finally {
+      isRefetchingRef.current = false;
+    }
+  }, [userId]);
+
+  // REAL-TIME: Smart polling for all profile changes (new, deleted, pinned, replied)
+  // - Polls every 5 seconds to reduce server load
+  // - Only polls when tab is visible (visibility API)
+  // - Replaces the full list to catch all changes (delete, pin, reply, edit)
+  // - Can be triggered immediately after user actions for instant feedback
+  useEffect(() => {
+    if (!isMounted) return;
+
+    // Only poll when tab is visible to reduce server load
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab is hidden, pause polling
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } else {
+        // Tab is visible, resume polling and fetch immediately
+        refetchConfessions(true);
+        if (!pollingIntervalRef.current) {
+          pollingIntervalRef.current = setInterval(() => refetchConfessions(), 5000);
+        }
+      }
+    };
+
+    // Set up visibility listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Start polling and fetch immediately
+    refetchConfessions(true);
+    pollingIntervalRef.current = setInterval(() => refetchConfessions(), 5000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [userId, isMounted, refetchConfessions]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
@@ -76,8 +195,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
       if (newConfessions.length === 0) {
         setHasMore(false);
       } else {
-        const uniqueNew = newConfessions.filter((c: any) => !existingIdsRef.current.has(c.id));
-        uniqueNew.forEach((c: any) => existingIdsRef.current.add(c.id));
+        const uniqueNew = newConfessions.filter((c: ConfessionWithUser) => !existingIdsRef.current.has(c.id));
+        uniqueNew.forEach((c: ConfessionWithUser) => existingIdsRef.current.add(c.id));
         offsetRef.current += uniqueNew.length;
 
         if (uniqueNew.length > 0) {
@@ -128,11 +247,21 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setIsSentView(window.location.pathname === "/dashboard/sent");
   }, []);
 
+  // Callbacks for tracking deleting confessions
+  // Prevents deleted confessions from briefly reappearing during polling
+  const registerDeleting = useCallback((id: string) => {
+    deletingIdsRef.current.add(id);
+  }, []);
+
+  const unregisterDeleting = useCallback((id: string) => {
+    deletingIdsRef.current.delete(id);
+  }, []);
+
   return (
     <section aria-label="Confessions feed">
       {/* 1. The List */}
       <div className={listClassName}>
-        {confessions.map((confession: any, i: number) => (
+        {confessions.map((confession: ConfessionWithUser, i: number) => (
           <article key={confession.id}>
             <ConfessionCard
               confession={confession}
@@ -140,6 +269,8 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
               isOwnerView={isOwner}
               isSentView={isSentView}
               currentUserId={currentUserId}
+              onDeletingStart={registerDeleting}
+              onDeletingEnd={unregisterDeleting}
             />
           </article>
         ))}

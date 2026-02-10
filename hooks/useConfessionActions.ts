@@ -3,11 +3,22 @@ import { toastSuccess, toastError } from "@/lib/toast";
 import { deleteConfession, togglePin, replyToConfession } from "@/lib/actions/manage";
 import { useConfirmDialog } from "@/components/ui/ConfirmDialog";
 
-export function useConfessionActions(initialPinned: boolean, initialReply: string | null) {
+interface UseConfessionActionsOptions {
+  onActionComplete?: () => void;
+  onDeletingStart?: (id: string) => void;
+  onDeletingEnd?: (id: string) => void;
+}
+
+export function useConfessionActions(
+  initialPinned: boolean,
+  initialReply: string | null,
+  options?: UseConfessionActionsOptions
+) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPinned, setIsPinned] = useState(initialPinned);
   const [optimisticReply, setOptimisticReply] = useState(initialReply);
   const { confirm } = useConfirmDialog();
+  const { onActionComplete, onDeletingStart, onDeletingEnd } = options || {};
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
@@ -21,11 +32,16 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
     if (!confirmed) return;
 
     setIsDeleting(true);
+    onDeletingStart?.(id); // Register this ID as being deleted
     const res = await deleteConfession(id);
     if (res?.error) {
       toastError(res.error);
+      onDeletingEnd?.(id); // Unregister on error
     } else {
       toastSuccess("Message deleted.");
+      onActionComplete?.();
+      // Keep the ID registered for a bit to prevent it from reappearing during polling
+      setTimeout(() => onDeletingEnd?.(id), 6000);
     }
     setIsDeleting(false);
   };
@@ -39,6 +55,7 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
       setIsPinned(!newState);
     } else {
       toastSuccess(newState ? "Pinned!" : "Unpinned.");
+      onActionComplete?.();
     }
   };
 
@@ -57,6 +74,7 @@ export function useConfessionActions(initialPinned: boolean, initialReply: strin
     } else {
       toastSuccess("Replied!");
       onClose();
+      onActionComplete?.();
     }
   };
 

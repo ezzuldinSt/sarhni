@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
+import { ConfessionWithUser } from "@/lib/types";
 
 // This component is designed to be captured as an image
 // Uses the Varela_Round font from the root layout (via --font-varela CSS variable)
-export const ConfessionSticker = ({ confession }: { confession: any }) => {
+export const ConfessionSticker = ({ confession }: { confession: ConfessionWithUser }) => {
   const date = new Date(confession.createdAt).toLocaleDateString();
   const senderName = confession.isAnonymous ? "Secret Admirer" : confession.sender?.username;
 

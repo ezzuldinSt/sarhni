@@ -11,26 +11,35 @@ import { sendConfession } from "@/lib/actions/confess";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SessionUser } from "@/lib/types";
 
 const schema = z.object({
   content: z.string().min(1, "You can't send an empty void!").max(500),
 });
 
-export default function ConfessionForm({ receiverId, usernamePath, user }: { receiverId: string, usernamePath: string, user: any }) {
+type FormData = z.infer<typeof schema>;
+
+interface ConfessionFormProps {
+  receiverId: string;
+  usernamePath: string;
+  user: SessionUser | null | undefined;
+}
+
+export default function ConfessionForm({ receiverId, usernamePath, user }: ConfessionFormProps) {
   const [isAnon, setIsAnon] = useState(true);
   const [isSent, setIsSent] = useState(false); // New state for success view
   const savedContentRef = useRef<string | null>(null); // Store content for error recovery
   const formId = "confession-form";
   const contentErrorId = "content-error";
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema)
   });
 
   const contentValue = watch("content", "");
   const charCount = contentValue.length;
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: FormData) => {
     // 1. OPTIMISTIC UPDATE: Show success immediately
     setIsSent(true);
     const content = data.content; // Capture content before reset

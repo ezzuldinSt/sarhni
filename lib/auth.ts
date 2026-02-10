@@ -114,6 +114,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (token.isBanned) {
+        // Return session with undefined user to signal banned state
         return { ...session, user: undefined } as any;
       }
       if (token.sub && session.user) {

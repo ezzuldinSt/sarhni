@@ -1,23 +1,12 @@
 "use server";
-import { getCachedSession } from "@/lib/auth-cached";
+import { requireAuth } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { Prisma } from "@prisma/client";
 
 export async function deleteConfession(confessionId: string) {
   try {
-    const session = await getCachedSession();
-    if (!session?.user?.id) return { error: "You must be logged in." };
-
-    // Explicit ban check - complements JWT refresh mechanism
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isBanned: true, role: true }
-    });
-
-    if (user?.isBanned) {
-      return { error: "Account banned." };
-    }
+    const user = await requireAuth();
 
     // 1. Verify ownership before deleting
     const confession = await prisma.confession.findUnique({
@@ -28,9 +17,9 @@ export async function deleteConfession(confessionId: string) {
     if (!confession) return { error: "Message not found." };
 
     // Allow deletion if: user is the receiver OR user is ADMIN/OWNER
-    const canDelete = confession.receiverId === session.user.id ||
-                      user?.role === "ADMIN" ||
-                      user?.role === "OWNER";
+    const canDelete = confession.receiverId === user.id ||
+                      user.role === "ADMIN" ||
+                      user.role === "OWNER";
 
     if (!canDelete) {
       return { error: "Unauthorized: You can't delete messages sent to others." };
@@ -42,8 +31,8 @@ export async function deleteConfession(confessionId: string) {
     });
 
     // 3. Refresh caches - use path-based for per-user invalidation
-    // revalidatePath is more reliable for per-user cache invalidation
     revalidatePath(`/u/${confession.receiver.username}`, "page");
+    revalidateTag("user-confessions", {});
     return { success: true };
   } catch (error) {
     console.error("Delete confession error:", error);
@@ -53,25 +42,14 @@ export async function deleteConfession(confessionId: string) {
 
 export async function replyToConfession(confessionId: string, replyContent: string) {
   try {
-    const session = await getCachedSession();
-    if (!session?.user?.id) return { error: "Unauthorized" };
-
-    // Explicit ban check - complements JWT refresh mechanism
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isBanned: true }
-    });
-
-    if (user?.isBanned) {
-      return { error: "Account banned." };
-    }
+    const user = await requireAuth();
 
     const confession = await prisma.confession.findUnique({
       where: { id: confessionId },
       select: { receiverId: true, receiver: { select: { username: true } } }
     });
 
-    if (!confession || confession.receiverId !== session.user.id) {
+    if (!confession || confession.receiverId !== user.id) {
       return { error: "You can only reply to your own messages." };
     }
 
@@ -85,6 +63,7 @@ export async function replyToConfession(confessionId: string, replyContent: stri
 
     // Use path-based for per-user cache invalidation
     revalidatePath(`/u/${confession.receiver.username}`, "page");
+    revalidateTag("user-confessions", {});
     return { success: true };
   } catch (error) {
     console.error("Reply to confession error:", error);
@@ -93,18 +72,7 @@ export async function replyToConfession(confessionId: string, replyContent: stri
 }
 
 export async function togglePin(confessionId: string) {
-  const session = await getCachedSession();
-  if (!session?.user?.id) return { error: "Unauthorized" };
-
-  // Explicit ban check - complements JWT refresh mechanism
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { isBanned: true, role: true }
-  });
-
-  if (user?.isBanned) {
-    return { error: "Account banned." };
-  }
+  const user = await requireAuth();
 
   // Use interactive transaction to prevent race conditions
   try {
@@ -118,18 +86,18 @@ export async function togglePin(confessionId: string) {
       if (!confession) throw new Error("Message not found");
 
       // Allow pinning if: user is the receiver OR user is ADMIN/OWNER
-      const canPin = confession.receiverId === session.user.id ||
-                     user?.role === "ADMIN" ||
-                     user?.role === "OWNER";
+      const canPin = confession.receiverId === user.id ||
+                     user.role === "ADMIN" ||
+                     user.role === "OWNER";
 
       if (!canPin) throw new Error("Unauthorized");
 
       // 2. If we are trying to PIN it (currently false), check limits within transaction
       // Skip limit check for ADMIN/OWNER (they can pin any number on other profiles)
-      if (!confession.isPinned && user?.role === "USER") {
+      if (!confession.isPinned && user.role === "USER") {
         const count = await tx.confession.count({
           where: {
-            receiverId: session.user.id,
+            receiverId: user.id,
             isPinned: true
           }
         });
@@ -151,6 +119,7 @@ export async function togglePin(confessionId: string) {
 
     // Use path-based for per-user cache invalidation
     revalidatePath(`/u/${result.username}`, "page");
+    revalidateTag("user-confessions", {});
     return { success: true, isPinned: result.isPinned };
 
   } catch (error) {
@@ -190,18 +159,7 @@ export async function fetchConfessions(userId: string, offset: number = 0) {
 
 export async function editConfession(confessionId: string, newContent: string) {
   try {
-    const session = await getCachedSession();
-    if (!session?.user?.id) return { error: "You must be logged in." };
-
-    // Explicit ban check - complements JWT refresh mechanism
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isBanned: true }
-    });
-
-    if (user?.isBanned) {
-      return { error: "Account banned." };
-    }
+    const user = await requireAuth();
 
     // 1. Verify ownership and check time window
     const confession = await prisma.confession.findUnique({
@@ -211,7 +169,7 @@ export async function editConfession(confessionId: string, newContent: string) {
 
     if (!confession) return { error: "Message not found." };
 
-    if (confession.senderId !== session.user.id) {
+    if (confession.senderId !== user.id) {
       return { error: "Unauthorized: You can only edit your own sent messages." };
     }
 
@@ -233,8 +191,9 @@ export async function editConfession(confessionId: string, newContent: string) {
       }
     });
 
-    // 4. Refresh caches - use path-based for per-user invalidation
+    // 4. Refresh caches - use path-based for per-user cache invalidation
     revalidatePath(`/u/${confession.receiver.username}`, "page");
+    revalidateTag("user-confessions", {});
 
     return { success: true };
   } catch (error) {

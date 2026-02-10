@@ -48,7 +48,7 @@ export async function updateUserProfile(formData: FormData) {
     }
 
     // Build update data - only include bio if validation passed
-    const data: Record<string, any> = {};
+    const data: { bio?: string | null; image?: string | null } = {};
     if (bioValidation.data !== undefined) {
       data.bio = bioValidation.data === "" ? null : bioValidation.data;
     }
@@ -72,9 +72,9 @@ export async function updateUserProfile(formData: FormData) {
     // The cache automatically differentiates by username argument
     if (user?.username) {
       revalidatePath(`/u/${user.username}`, "page");
-      revalidateTag(`user-${user.username}`, {}); // Attempt per-user tag invalidation
     }
-    revalidateTag("user-search", {}); // Invalidate search cache (global - appropriate)
+    revalidateTag("user-profiles", {}); // Invalidate user profile cache
+    revalidateTag("user-search", {}); // Invalidate search cache
     revalidatePath("/dashboard/settings", "page");
     return { success: true };
   } catch (error) {
@@ -117,8 +117,8 @@ export async function deleteProfileImage() {
 
     // 4. Revalidate caches with path-based and tag-based invalidation
     revalidatePath(`/u/${user.username}`, "page");
-    revalidateTag(`user-${user.username}`, {}); // Attempt per-user tag invalidation
-    revalidateTag("user-search", {}); // Invalidate search cache (global - appropriate)
+    revalidateTag("user-profiles", {}); // Invalidate user profile cache
+    revalidateTag("user-search", {}); // Invalidate search cache
     revalidatePath("/dashboard/settings", "page");
 
     return { success: true };

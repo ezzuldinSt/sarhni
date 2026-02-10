@@ -92,7 +92,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
 
         {/* OPTIMIZATION: Pass currentUserId to avoid duplicate auth() call */}
         <Suspense fallback={<ConfessionsSkeleton />}>
-          <ProfileConfessions userId={user.id} isOwner={isOwner} currentUserId={session?.user?.id} />
+          <ProfileConfessions userId={user.id} username={user.username} isOwner={isOwner} currentUserId={session?.user?.id} />
         </Suspense>
       </div>
     </div>
@@ -101,13 +101,14 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
 
 // --- Async component: streams confessions ---
 // OPTIMIZATION: Accept currentUserId as prop to avoid duplicate auth() call
-async function ProfileConfessions({ userId, isOwner, currentUserId }: { userId: string; isOwner: boolean; currentUserId?: string }) {
+async function ProfileConfessions({ userId, username, isOwner, currentUserId }: { userId: string; username: string; isOwner: boolean; currentUserId?: string }) {
   const confessions = await getCachedUserConfessions(userId);
 
   return (
     <ConfessionFeed
       initialConfessions={confessions}
       userId={userId}
+      username={username}
       isOwner={isOwner}
       currentUserId={currentUserId}
     />
