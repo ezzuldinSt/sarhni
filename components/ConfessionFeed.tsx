@@ -54,11 +54,21 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
   }, []);
 
   // Sync state when the server revalidates (e.g., after sending a message)
+  // Only sync if we don't already have data, preventing empty flashes during revalidation
   useEffect(() => {
-    setConfessions(initialConfessions);
-    offsetRef.current = initialConfessions.length;
-    existingIdsRef.current = new Set(initialConfessions.map(c => c.id));
-    setHasMore(true);
+    // Skip if we already have confessions and the new data is empty
+    // This prevents the feed from briefly emptying during revalidation
+    if (confessionsRef.current.length > 0 && initialConfessions.length === 0) {
+      return;
+    }
+
+    // Only sync if we have meaningful data or we're initializing
+    if (initialConfessions.length > 0 || confessionsRef.current.length === 0) {
+      setConfessions(initialConfessions);
+      offsetRef.current = initialConfessions.length;
+      existingIdsRef.current = new Set(initialConfessions.map(c => c.id));
+      setHasMore(true);
+    }
   }, [initialConfessions]);
 
   // REAL-TIME: Refetch function for immediate updates after user actions
