@@ -50,44 +50,46 @@ export default function ConfessionFeed({ initialConfessions, userId, isOwner, gr
     setHasMore(true);
   }, [initialConfessions]);
 
-  // REAL-TIME: SSE connection for receiving new confessions
-  // Connects for anyone viewing a profile (owner or visitor)
+  // REAL-TIME: Poll for new confessions every 3 seconds
+  // This is more reliable than SSE in serverless environments
   useEffect(() => {
-    // Need username to construct SSE URL
-    if (!username) return;
-
-    // Skip if not mounted (prevents hydration issues)
+    // Only poll on profile pages, not on sent/dashboards views
     if (!isMounted) return;
 
-    const eventSource = new EventSource(`/api/confessions/stream?userId=${userId}`);
-
-    eventSource.onmessage = (event) => {
+    const pollForNewConfessions = async () => {
       try {
-        const newConfession = JSON.parse(event.data);
+        // Fetch latest confessions (first page)
+        const latest = await fetchConfessions(userId, 0);
 
-        // Avoid adding duplicates (e.g., from server revalidation)
-        if (existingIdsRef.current.has(newConfession.id)) {
-          return;
+        // Filter to only new confessions we don't have yet
+        const newConfessions = latest.filter((c: any) => !existingIdsRef.current.has(c.id));
+
+        if (newConfessions.length > 0) {
+          // Sort by createdAt descending (newest first)
+          newConfessions.sort((a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // Add to the beginning of the feed
+          newConfessions.forEach((c: any) => existingIdsRef.current.add(c.id));
+          setConfessions((prev) => [...newConfessions, ...prev]);
+          offsetRef.current += newConfessions.length;
         }
-
-        // Add new confession to the beginning of the feed
-        setConfessions((prev) => [newConfession, ...prev]);
-        existingIdsRef.current.add(newConfession.id);
-        offsetRef.current += 1;
       } catch (error) {
-        console.error("Failed to parse SSE confession data:", error);
+        // Silently fail on polling errors to avoid spamming the console
       }
     };
 
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
-      eventSource.close();
-    };
+    // Poll every 3 seconds
+    const intervalId = setInterval(pollForNewConfessions, 3000);
+
+    // Also poll immediately on mount to catch any updates since page load
+    pollForNewConfessions();
 
     return () => {
-      eventSource.close();
+      clearInterval(intervalId);
     };
-  }, [userId, username, isMounted]);
+  }, [userId, isMounted]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading) return;
