@@ -1,0 +1,107 @@
+generator client {
+  provider      = "prisma-client-js"
+  // Vercel automatically uses the correct binary for the platform
+  // 'native' is sufficient for both local development and Vercel deployment
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // DIRECT_URL is required for Vercel Postgres migrations
+  // It provides a direct connection (bypassing PgBouncer connection pool)
+  // which is necessary for schema changes via Prisma Migrate
+  // @see {@link https://vercel.com/kb/guide/nextjs-prisma-postgres}
+  directUrl  = env("DIRECT_URL")
+}
+
+// 1. Define the Roles
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+model User {
+  id            String       @id @default(cuid())
+  username      String       @unique
+  password      String?
+  image         String?
+  bio           String?
+
+  // 2. Add Role & Ban fields
+  role          Role         @default(USER)
+  isBanned      Boolean      @default(false)
+
+  createdAt     DateTime     @default(now())
+
+  sentConfessions     Confession[] @relation("SentConfessions")
+  receivedConfessions Confession[] @relation("ReceivedConfessions")
+  reports             Report[]
+  reviewedReports    Report[] @relation("ReviewReports")
+
+  @@index([username])
+}
+
+model Confession {
+  id          String   @id @default(cuid())
+  content     String
+  reply       String?
+  replyAt     DateTime?
+  isPinned    Boolean  @default(false)
+  isAnonymous Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  editedAt     DateTime?
+
+  senderId    String?
+  sender      User?    @relation("SentConfessions", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId  String
+  receiver    User     @relation("ReceivedConfessions", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  reports     Report[]
+
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([senderId, createdAt])
+  @@index([receiverId, isPinned, createdAt])
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  confessionId String
+  confession   Confession @relation(fields: [confessionId], references: [id], onDelete: Cascade)
+
+  reporterId  String
+  reporter    User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  reviewer    User? @relation("ReviewReports", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([confessionId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([status, createdAt])
+  @@index([reporterId, status])
+  @@index([confessionId, status])
+}
