@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 className="bg-leather-pop hover:bg-leather-popHover text-leather-900"
               >
-                <RefreshCw size={16} className="mr-2" />
+                <RefreshCw size={16} className="me-2" />
                 Try Again
               </Button>
               <Button
@@ -67,7 +67,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="mt-6 text-left">
+              <details className="mt-6 text-start">
                 <summary className="text-sm text-leather-500 cursor-pointer hover:text-leather-accent">
                   Error details (development only)
                 </summary>

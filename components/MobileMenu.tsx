@@ -123,7 +123,7 @@ export default function MobileMenu({ session }: MobileMenuProps) {
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('mobileNavLabel')}
-                className="fixed top-0 right-0 bottom-0 w-[75%] max-w-sm z-modal shadow-2xl flex flex-col p-6 border-l border-leather-700 touch-pan-x bg-leather-800"
+                className="fixed top-0 end-0 bottom-0 w-[75%] max-w-sm z-modal shadow-2xl flex flex-col p-6 border-s border-leather-700 touch-pan-x bg-leather-800"
               >
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">

@@ -95,20 +95,20 @@ export default function UserSearch({ className, onSelect }: { className?: string
     <div ref={containerRef} className={`relative ${className || ""}`}>
         {/* Search Input */}
         <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-leather-500 group-focus-within:text-leather-pop transition-colors" aria-hidden="true" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-leather-500 group-focus-within:text-leather-pop transition-colors" aria-hidden="true" />
             <input
                 type="text"
                 inputMode="search"
                 enterKeyHint="search"
                 aria-label="Search users"
                 placeholder="Find a soul..."
-                className="w-full bg-leather-900 border border-leather-600/50 rounded-full py-2.5 pl-10 pr-10 text-sm text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-2 focus:ring-leather-pop focus:border-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 transition-all"
+                className="w-full bg-leather-900 border border-leather-600/50 rounded-full py-2.5 ps-10 pe-10 text-sm text-leather-accent placeholder-leather-600 focus:outline-none focus:ring-2 focus:ring-leather-pop focus:border-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 transition-all"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => query.length >= 2 && setIsOpen(true)}
             />
             {isLoading && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4">
+                <div className="absolute end-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4">
                   <Loader2 className="w-4 h-4 text-leather-pop animate-spin-fast" aria-hidden="true" />
                 </div>
             )}
@@ -122,7 +122,7 @@ export default function UserSearch({ className, onSelect }: { className?: string
                       <button
                           key={user.username}
                           onClick={() => handleSelect(user.username)}
-                          className="w-full text-left px-4 py-3 hover:bg-leather-700 flex items-center gap-3 transition-colors group"
+                          className="w-full text-start px-4 py-3 hover:bg-leather-700 flex items-center gap-3 transition-colors group"
                       >
                           <div className="relative w-avatar-sm h-avatar-sm rounded-full overflow-hidden bg-leather-900 shrink-0 border border-leather-600 group-hover:border-leather-pop">
                               <Image

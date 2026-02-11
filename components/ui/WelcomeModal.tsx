@@ -139,7 +139,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
               {/* Close button */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 z-10 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
+                className="absolute top-4 end-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 z-10 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
                 aria-label="Close welcome tour"
               >
                 <X size={24} />
@@ -194,7 +194,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                         className="mb-6 w-full"
                         variant="secondary"
                       >
-                        <Share2 size={18} className="mr-2" />
+                        <Share2 size={18} className="me-2" />
                         Copy Profile Link
                       </Button>
                     )}
@@ -238,7 +238,7 @@ export function WelcomeModal({ isOpen, onClose, username }: WelcomeModalProps) {
                     ) : (
                       <>
                         Next
-                        <ArrowRight size={16} className="ml-2" />
+                        <ArrowRight size={16} className="ms-2" />
                       </>
                     )}
                   </Button>

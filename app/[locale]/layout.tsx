@@ -4,6 +4,7 @@ import {setRequestLocale} from 'next-intl/server';
 import Navbar from "@/components/Navbar";
 import {ConfirmDialogProvider} from "@/components/ui/ConfirmDialog";
 import {ErrorBoundaryWrapper} from "@/components/ErrorBoundaryWrapper";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type Props = {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ export default async function LocaleLayout({children, params}: Props) {
           </ConfirmDialogProvider>
         </ErrorBoundaryWrapper>
       </main>
+      <LanguageSwitcher />
     </>
   );
 }

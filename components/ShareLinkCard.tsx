@@ -68,7 +68,7 @@ function ShareLinkCardInner({ username, compact = false, embedded = false }: Sha
   return (
     <Card className="bg-gradient-to-br from-leather-800/80 to-leather-900/80 border-leather-pop/20 overflow-hidden relative group hover:border-leather-pop/30 transition-all duration-300">
       {/* Background decorative elements */}
-      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+      <div className="absolute top-0 end-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
         <Share2 size={120} className="text-leather-pop" />
       </div>
       <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-leather-pop/5 rounded-full blur-3xl" />

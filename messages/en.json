@@ -59,7 +59,9 @@
       "password": "Password",
       "submit": "Sign In",
       "noAccount": "Don't have an account?",
-      "signUp": "Sign up"
+      "signUp": "Sign up",
+      "bannedError": "Your account has been banned.",
+      "invalidCredentials": "Invalid email or password."
     },
     "register": {
       "title": "Create Account",
@@ -70,7 +72,132 @@
       "confirmPassword": "Confirm Password",
       "submit": "Create Account",
       "hasAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "usernameRequired": "Username is required",
+      "usernameLength": "Username must be 3-20 characters",
+      "usernameAlphanumeric": "Username can only contain letters and numbers",
+      "emailRequired": "Email is required",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match",
+      "userExists": "Username already taken",
+      "emailExists": "Email already registered"
     }
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "greeting": "Welcome back!",
+    "shareLink": "Share Your Link",
+    "shareDescription": "Copy this link and share it with friends to receive anonymous messages",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard!",
+    "tabs": {
+      "inbox": "Inbox",
+      "sent": "Sent",
+      "pinned": "Pinned"
+    },
+    "inbox": {
+      "title": "Messages",
+      "empty": "No messages yet",
+      "emptyDescription": "Share your link to start receiving anonymous messages!"
+    },
+    "sent": {
+      "title": "Sent Messages",
+      "empty": "No sent messages yet",
+      "emptyDescription": "Send anonymous messages to your friends!"
+    },
+    "pinned": {
+      "title": "Pinned Messages",
+      "empty": "No pinned messages yet",
+      "emptyDescription": "Pin your favorite messages to show them here!",
+      "maxPinned": "You can pin up to 3 messages"
+    }
+  },
+  "Confession": {
+    "send": "Send Message",
+    "placeholder": "Write an anonymous message...",
+    "anonymous": "Send anonymously",
+    "submit": "Send Message",
+    "success": "Message sent successfully!",
+    "error": "Failed to send message",
+    "loginRequired": "Please login to send messages",
+    "tooLong": "Message is too long (max 500 characters)",
+    "empty": "Message cannot be empty"
+  },
+  "Profile": {
+    "title": "Profile",
+    "messages": "Messages",
+    "edit": "Edit Profile",
+    "logout": "Logout",
+    "noMessages": "No messages yet"
+  },
+  "Settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "notifications": "Notifications",
+    "deleteAccount": "Delete Account",
+    "save": "Save Changes",
+    "saved": "Settings saved successfully!"
+  },
+  "Report": {
+    "title": "Report Message",
+    "description": "Help us keep the community safe by reporting inappropriate content.",
+    "reason": "Reason for reporting",
+    "submit": "Submit Report",
+    "cancel": "Cancel",
+    "success": "Report submitted successfully!",
+    "spam": "Spam",
+    "harassment": "Harassment",
+    "inappropriate": "Inappropriate Content",
+    "other": "Other"
+  },
+  "Search": {
+    "title": "Search Users",
+    "placeholder": "Find a soul...",
+    "noResults": "No users found",
+    "tryDifferent": "Try a different search term",
+    "rateLimited": "You're searching too fast. Take a breath."
+  },
+  "Errors": {
+    "generic": "Something went wrong. Please try again.",
+    "notFound": "Page not found",
+    "unauthorized": "You need to login to access this page",
+    "forbidden": "You don't have permission to access this page",
+    "serverError": "Server error. Please try again later."
+  },
+  "Welcome": {
+    "step1": {
+      "title": "Welcome to Sarhni! 👋",
+      "description": "Your anonymous messaging platform is ready. Share your link and discover what people really think about you."
+    },
+    "step2": {
+      "title": "Share Your Profile",
+      "description": "Copy your unique profile link and share it on social media, with friends, or anywhere you want to receive anonymous messages.",
+      "action": "Copy Profile Link"
+    },
+    "step3": {
+      "title": "Send Anonymous Messages",
+      "description": "Visit other users' profiles to send them anonymous confessions. Choose to reveal yourself or stay completely anonymous."
+    },
+    "step4": {
+      "title": "Pin Your Favorites",
+      "description": "Love a message? Pin it to your profile! You can pin up to 3 messages to showcase your favorite confessions."
+    },
+    "step5": {
+      "title": "You're All Set! 🚀",
+      "description": "Your journey begins now. Start sharing your link and wait for the anonymous messages to roll in!"
+    },
+    "next": "Next",
+    "previous": "Previous",
+    "getStarted": "Get Started"
+  },
+  "Toast": {
+    "linkCopied": "Link copied to clipboard!",
+    "messageSent": "Message sent successfully!",
+    "pinned": "Message pinned!",
+    "unpinned": "Message unpinned!",
+    "deleted": "Message deleted!",
+    "error": "Something went wrong"
   }
 }

@@ -86,7 +86,7 @@ export default async function UserProfile({ params }: { params: Promise<{ userna
 
       {/* Confessions Feed (streams in via Suspense) */}
       <div className="space-y-6">
-        <h3 className="text-xl font-bold text-leather-accent pl-2 border-l-4 border-leather-pop mb-6">
+        <h3 className="text-xl font-bold text-leather-accent ps-2 border-s-4 border-leather-pop mb-6">
           Confessions
         </h3>
 

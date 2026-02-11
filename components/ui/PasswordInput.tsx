@@ -103,14 +103,14 @@ export function PasswordInput({
           required={required}
           value={passwordValue}
           onChange={handleChange}
-          className={`w-full bg-leather-900 rounded-xl p-3 pr-12 text-leather-accent placeholder:text-leather-600 focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 outline-none transition-all duration-200 ${className}`}
+          className={`w-full bg-leather-900 rounded-xl p-3 pe-12 text-leather-accent placeholder:text-leather-600 focus:ring-2 focus:ring-leather-pop focus:ring-offset-2 focus:ring-offset-leather-900 outline-none transition-all duration-200 ${className}`}
           placeholder={placeholder}
           aria-describedby="password-strength password-requirements"
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-leather-500 hover:text-leather-accent transition-colors -mr-2 -mt-2 min-h-touch min-w-touch flex items-center justify-center"
+          className="absolute end-3 top-1/2 -translate-y-1/2 p-2 text-leather-500 hover:text-leather-accent transition-colors -me-2 -mt-2 min-h-touch min-w-touch flex items-center justify-center"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

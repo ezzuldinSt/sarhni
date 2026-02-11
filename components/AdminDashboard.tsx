@@ -269,13 +269,13 @@ const AdminDashboardContent = memo(function AdminDashboardContent({ users, viewe
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-leather-500" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-5 h-5 text-leather-500" />
           <input
             type="text"
             placeholder="Search users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-leather-800 border border-leather-700 rounded-lg text-leather-accent placeholder:text-leather-500 focus:outline-none focus:ring-2 focus:ring-leather-pop/50"
+            className="w-full ps-10 pe-4 py-2.5 bg-leather-800 border border-leather-700 rounded-lg text-leather-accent placeholder:text-leather-500 focus:outline-none focus:ring-2 focus:ring-leather-pop/50"
           />
         </div>
 

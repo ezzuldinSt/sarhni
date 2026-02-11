@@ -31,7 +31,7 @@ export default function SearchPage() {
             <h2 className="text-lg font-bold text-leather-accent mb-2">
               How it works
             </h2>
-            <ul className="text-sm text-leather-100/70 space-y-2 text-left">
+            <ul className="text-sm text-leather-100/70 space-y-2 text-start">
               <li className="flex items-start gap-2">
                 <span className="text-leather-pop mt-0.5">•</span>
                 <span>Search for any user by their username</span>

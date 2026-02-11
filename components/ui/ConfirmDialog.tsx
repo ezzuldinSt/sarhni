@@ -198,7 +198,7 @@ export function ConfirmDialog({
                 <div className={`w-12 h-12 rounded-full ${styles.iconBg} flex items-center justify-center flex-shrink-0`}>
                   <AlertTriangle size={24} className={styles.icon} />
                 </div>
-                <div className="flex-1 pr-8">
+                <div className="flex-1 pe-8">
                   <h2
                     id="dialog-title"
                     className="text-lg font-bold text-leather-accent mb-1"
@@ -207,7 +207,7 @@ export function ConfirmDialog({
                   </h2>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
+                    className="absolute top-4 end-4 text-leather-500 hover:text-leather-accent transition-colors duration-200 p-1 rounded-lg hover:bg-leather-700/50 focus-visible:ring-2 focus-visible:ring-leather-pop focus-visible:ring-offset-2 focus-visible:ring-offset-leather-800"
                     aria-label="Close dialog"
                   >
                     <X size={20} />

@@ -298,7 +298,7 @@ function ConfessionCardInner({ confession, index, isOwnerView = false, isSentVie
 
         {/* --- Reply Section (Display) --- */}
         {optimisticReply && (
-          <div className="mt-5 pt-5 border-t border-leather-600/30 bg-leather-800/50 p-4 rounded-xl border-l-4 border-leather-pop mb-4">
+          <div className="mt-5 pt-5 border-t border-leather-600/30 bg-leather-800/50 p-4 rounded-xl border-s-4 border-leather-pop mb-4">
             <div className="flex items-center gap-2 mb-1">
                <div className="w-avatar-xs h-avatar-xs rounded-full bg-leather-pop flex items-center justify-center text-[10px] text-leather-900 font-bold">
                  {confession.receiver?.username?.[0].toUpperCase() || "Me"}

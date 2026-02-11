@@ -91,11 +91,11 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                 <div className="w-12 h-12 rounded-full bg-leather-pop/10 flex items-center justify-center flex-shrink-0">
                   <AlertTriangle size={24} className="text-leather-pop" />
                 </div>
-                <div className="flex-1 pr-8">
+                <div className="flex-1 pe-8">
                   <h2 className="text-xl font-bold text-leather-accent mb-1">Report Message</h2>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-leather-100 hover:text-leather-accent hover:bg-leather-700/50 rounded-lg transition-colors"
+                    className="absolute top-4 end-4 p-2 text-leather-100 hover:text-leather-accent hover:bg-leather-700/50 rounded-lg transition-colors"
                     aria-label="Close dialog"
                   >
                     <X size={20} />
@@ -119,14 +119,14 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                         key={reason.value}
                         type="button"
                         onClick={() => setSelectedReason(reason.value)}
-                        className={`p-3 rounded-xl border-2 transition-all text-left min-h-[64px] ${
+                        className={`p-3 rounded-xl border-2 transition-all text-start min-h-[64px] ${
                           selectedReason === reason.value
                             ? "border-leather-pop bg-leather-pop/10 shadow-lg shadow-leather-pop/20"
                             : "border-leather-700 bg-leather-900 hover:border-leather-600 hover:bg-leather-800"
                         }`}
                         aria-pressed={selectedReason === reason.value}
                       >
-                        <span className="text-lg mr-2" aria-hidden="true">{reason.icon}</span>
+                        <span className="text-lg me-2" aria-hidden="true">{reason.icon}</span>
                         <span className="text-sm font-medium">{reason.label}</span>
                       </button>
                     ))}
@@ -154,7 +154,7 @@ export function ReportDialog({ isOpen, onClose, confessionId }: ReportDialogProp
                     />
                     <span
                       id="description-char-count"
-                      className={`absolute bottom-2 right-2 text-xs font-mono transition-colors ${
+                      className={`absolute bottom-2 end-2 text-xs font-mono transition-colors ${
                         description.length > 450 ? 'text-red-400 font-bold' : 'text-leather-500'
                       }`}
                       aria-live="polite"
