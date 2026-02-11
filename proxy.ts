@@ -1,13 +1,38 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getCachedSession } from "@/lib/auth-cached";
+import createMiddleware from 'next-intl/middleware';
+import {routing} from './i18n/routing';
+
+// Create the next-intl middleware
+const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // First, handle internationalization
+  // Skip intl middleware for API routes and other non-page routes
+  const shouldSkipIntl = pathname.startsWith('/api') ||
+                         pathname.startsWith('/_next') ||
+                         pathname.startsWith('/uploads') ||
+                         pathname.includes('.');
+
+  if (!shouldSkipIntl) {
+    const intlResponse = intlMiddleware(request);
+    // If intl middleware returns a response (like a redirect), use it
+    if (intlResponse) return intlResponse;
+  }
+
   // 1. Define protected and public routes
-  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname.startsWith("/owner");
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  // Need to account for locale prefix in pathnames
+  const localePrefixPattern = `^/(${routing.locales.join('|')})`;
+  const pathnameWithoutLocale = pathname.replace(new RegExp(localePrefixPattern), '') || '/';
+
+  const isProtected = pathnameWithoutLocale.startsWith("/dashboard") ||
+                     pathnameWithoutLocale.startsWith("/admin") ||
+                     pathnameWithoutLocale.startsWith("/owner");
+  const isAuthPage = pathnameWithoutLocale === "/login" ||
+                    pathnameWithoutLocale === "/register";
 
   // 2. Validate session using NextAuth's auth() function
   // This properly validates JWT signature, expiry, and returns null for invalid sessions
@@ -18,21 +43,28 @@ export async function proxy(request: NextRequest) {
 
   // 3. Logic: Redirect Unauthenticated Users
   if (isProtected && !session) {
-    const loginUrl = new URL("/login", request.url);
+    // Get current locale for proper redirect
+    const localeMatch = pathname.match(new RegExp(localePrefixPattern));
+    const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
+    const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // Redirect banned users to login with error
   if (isProtected && isBanned) {
-    const loginUrl = new URL("/login", request.url);
+    const localeMatch = pathname.match(new RegExp(localePrefixPattern));
+    const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
+    const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("error", "banned");
     return NextResponse.redirect(loginUrl);
   }
 
   // 4. Logic: Redirect Authenticated Users (Guest Only Pages)
   if (isAuthPage && session && !isBanned) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    const localeMatch = pathname.match(new RegExp(localePrefixPattern));
+    const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
   // Allow the request to proceed

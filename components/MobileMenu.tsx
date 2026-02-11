@@ -9,6 +9,8 @@ import { Menu, X, Home, User, Settings, LogOut, LayoutDashboard, Shield, Flag, C
 import { signOut } from "next-auth/react";
 import UserSearch from "./UserSearch";
 import { SafeSession } from "@/lib/types";
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 
 interface MobileMenuProps {
   session: SafeSession | null;
@@ -19,6 +21,8 @@ export default function MobileMenu({ session }: MobileMenuProps) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const locale = useLocale();
+  const t = useTranslations('Navbar');
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
@@ -65,13 +69,13 @@ export default function MobileMenu({ session }: MobileMenuProps) {
   };
 
   const menuVariants = {
-    closed: { 
-      x: "100%", 
-      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    closed: {
+      x: "100%",
+      transition: { type: "spring", stiffness: 300, damping: 30 }
     },
-    open: { 
-      x: 0, 
-      transition: { type: "spring", stiffness: 300, damping: 30 } 
+    open: {
+      x: 0,
+      transition: { type: "spring", stiffness: 300, damping: 30 }
     }
   };
 
@@ -81,7 +85,7 @@ export default function MobileMenu({ session }: MobileMenuProps) {
       <button
         onClick={toggleOpen}
         className="p-2 text-leather-accent hover:text-leather-pop transition-colors"
-        aria-label="Toggle Menu"
+        aria-label={t('toggleMenu')}
         aria-expanded={isOpen}
         aria-controls="mobile-menu"
       >
@@ -118,17 +122,17 @@ export default function MobileMenu({ session }: MobileMenuProps) {
                 id="mobile-menu"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Mobile navigation menu"
+                aria-label={t('mobileNavLabel')}
                 className="fixed top-0 right-0 bottom-0 w-[75%] max-w-sm z-modal shadow-2xl flex flex-col p-6 border-l border-leather-700 touch-pan-x bg-leather-800"
               >
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
-                  <span className="text-xl font-bold text-leather-pop tracking-tight">Menu</span>
+                  <span className="text-xl font-bold text-leather-pop tracking-tight">{t('menu')}</span>
                   <button
                     ref={closeButtonRef}
                     onClick={toggleOpen}
                     className="text-leather-accent hover:text-leather-pop hover:bg-leather-700/30 p-2 rounded-lg transition-colors"
-                    aria-label="Close Menu"
+                    aria-label={t('closeMenu')}
                   >
                     <X size={28} />
                   </button>
@@ -141,58 +145,58 @@ export default function MobileMenu({ session }: MobileMenuProps) {
 
                 {/* Navigation Links */}
                 <nav className="flex flex-col gap-6 text-lg">
-                  <Link 
-                    href="/" 
+                  <Link
+                    href={`/${locale}`}
                     onClick={toggleOpen}
-                    className={`flex items-center gap-4 ${pathname === '/' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                    className={`flex items-center gap-4 ${pathname === `/${locale}` || pathname === '/' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                   >
-                    <Home size={20} /> Home
+                    <Home size={20} /> {t('home')}
                   </Link>
 
                   {session?.user ? (
                     <>
-                      <Link 
-                        href="/dashboard" 
+                      <Link
+                        href={`/${locale}/dashboard`}
                         onClick={toggleOpen}
-                        className={`flex items-center gap-4 ${pathname === '/dashboard' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                        className={`flex items-center gap-4 ${pathname === `/${locale}/dashboard` ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                       >
-                        <LayoutDashboard size={20} /> Dashboard
+                        <LayoutDashboard size={20} /> {t('dashboard')}
                       </Link>
                       {session.user.name && (
                         <Link
-                          href={`/u/${session.user.name}`}
+                          href={`/${locale}/u/${session.user.name}`}
                           onClick={toggleOpen}
-                          className={`flex items-center gap-4 ${pathname.startsWith('/u/') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                          className={`flex items-center gap-4 ${pathname.startsWith(`/${locale}/u/`) ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                         >
-                          <User size={20} /> My Profile
+                          <User size={20} /> {t('myProfile')}
                         </Link>
                       )}
                       <Link
-                        href="/dashboard/settings"
+                        href={`/${locale}/dashboard/settings`}
                         onClick={toggleOpen}
-                        className={`flex items-center gap-4 ${pathname === '/dashboard/settings' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                        className={`flex items-center gap-4 ${pathname === `/${locale}/dashboard/settings` ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                       >
-                        <Settings size={20} /> Settings
+                        <Settings size={20} /> {t('settings')}
                       </Link>
 
                       {/* Admin Section - ADMIN and OWNER */}
                       {(session?.user?.role === "ADMIN" || session?.user?.role === "OWNER") && (
                         <>
                           <div className="h-px bg-leather-600/50 my-2" />
-                          <div className="text-xs font-bold text-leather-100 uppercase tracking-wider mb-3">Admin</div>
+                          <div className="text-xs font-bold text-leather-100 uppercase tracking-wider mb-3">{t('adminSection')}</div>
                           <Link
-                            href="/admin/reports"
+                            href={`/${locale}/admin/reports`}
                             onClick={toggleOpen}
-                            className={`flex items-center gap-4 ${pathname.startsWith('/admin/reports') ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                            className={`flex items-center gap-4 ${pathname.startsWith(`/${locale}/admin/reports`) ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                           >
-                            <Flag size={20} /> Reports
+                            <Flag size={20} /> {t('reports')}
                           </Link>
                           <Link
-                            href="/admin"
+                            href={`/${locale}/admin`}
                             onClick={toggleOpen}
-                            className={`flex items-center gap-4 ${pathname === '/admin' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                            className={`flex items-center gap-4 ${pathname === `/${locale}/admin` ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                           >
-                            <Shield size={20} /> Admin Console
+                            <Shield size={20} /> {t('adminConsole')}
                           </Link>
                         </>
                       )}
@@ -200,37 +204,37 @@ export default function MobileMenu({ session }: MobileMenuProps) {
                       {/* Owner Section - OWNER only */}
                       {session?.user?.role === "OWNER" && (
                         <Link
-                          href="/owner"
+                          href={`/${locale}/owner`}
                           onClick={toggleOpen}
-                          className={`flex items-center gap-4 ${pathname === '/owner' ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
+                          className={`flex items-center gap-4 ${pathname === `/${locale}/owner` ? 'text-leather-pop font-bold' : 'text-leather-accent'}`}
                         >
-                          <Crown size={20} /> Owner Command
+                          <Crown size={20} /> {t('ownerCommand')}
                         </Link>
                       )}
 
                       <div className="h-px bg-leather-600/50 my-2" />
 
                       <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={() => signOut({ callbackUrl: `/${locale}` })}
                         className="flex items-center gap-4 text-leather-pop font-bold"
                       >
-                        <LogOut size={20} /> Sign Out
+                        <LogOut size={20} /> {t('logout')}
                       </button>
                     </>
                   ) : (
                     <>
                       <div className="h-px bg-leather-600/50 my-2" />
-                      <Link 
-                        href="/login" 
+                      <Link
+                        href={`/${locale}/login`}
                         onClick={toggleOpen}
                         className="flex items-center gap-4 text-leather-pop font-bold"
                       >
-                        <User size={20} /> Login / Register
+                        <User size={20} /> {t('loginRegister')}
                       </Link>
                     </>
                   )}
                 </nav>
-                
+
                 <div className="mt-auto text-center">
                    <p className="text-xs text-leather-100">Sarhni © 2026</p>
                 </div>

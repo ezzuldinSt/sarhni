@@ -1,0 +1,76 @@
+{
+  "HomePage": {
+    "hero": {
+      "tagline": "The cozy space for honest, anonymous confessions.",
+      "description": "Connect with friends through genuine messages — no masks, no judgment.",
+      "anonymous": "100% Anonymous",
+      "free": "Free Forever",
+      "secure": "Safe & Secure",
+      "getStarted": "Get Started Free",
+      "login": "Login",
+      "goToDashboard": "Go to Dashboard",
+      "socialProof": "Join thousands sharing honest messages every day"
+    },
+    "howItWorks": {
+      "title": "How Sarhni Works",
+      "step1": {
+        "title": "1. Share your Link",
+        "description": "Create your personal space and share the link on Instagram, Twitter, or WhatsApp."
+      },
+      "step2": {
+        "title": "2. Receive Truths",
+        "description": "Friends can send you anonymous messages without revealing their identity."
+      },
+      "step3": {
+        "title": "3. Reply & React",
+        "description": "Pin your favorites, reply to messages, or share them as cool stickers."
+      }
+    },
+    "footer": {
+      "copyright": "© 2026 Sarhni. Built for honest connections."
+    }
+  },
+  "Navbar": {
+    "logo": "Sarhni",
+    "search": "Search users...",
+    "login": "Login",
+    "register": "Get Started",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Sign Out",
+    "home": "Home",
+    "myProfile": "My Profile",
+    "adminSection": "Admin",
+    "reports": "Reports",
+    "adminConsole": "Admin Console",
+    "ownerCommand": "Owner Command",
+    "menu": "Menu",
+    "loginRegister": "Login / Register",
+    "toggleMenu": "Toggle Menu",
+    "closeMenu": "Close Menu",
+    "mobileNavLabel": "Mobile navigation menu"
+  },
+  "Auth": {
+    "login": {
+      "title": "Welcome Back",
+      "description": "Sign in to your account to continue",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "register": {
+      "title": "Create Account",
+      "description": "Join Sarhni and start receiving anonymous messages",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    }
+  }
+}
