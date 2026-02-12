@@ -47,13 +47,17 @@ export async function updateUserProfile(formData: FormData) {
       return { error: imageValidationResult.error.errors[0].message };
     }
 
-    // Build update data - only include bio if validation passed
+    // Build update data - only include fields that were explicitly provided
     const data: { bio?: string | null; image?: string | null } = {};
     if (bioValidation.data !== undefined) {
       data.bio = bioValidation.data === "" ? null : bioValidation.data;
     }
-    if (imageValidationResult.data !== undefined) {
-      data.image = imageValidationResult.data === "" ? null : imageValidationResult.data;
+    // Only update image if the imageUrl field was actually sent in FormData
+    // formData.has() distinguishes between "field not sent" vs "field sent as null/empty"
+    if (formData.has("imageUrl")) {
+      data.image = imageValidationResult.data === "" || imageValidationResult.data === null
+        ? null
+        : imageValidationResult.data;
     }
 
     // Get user's username before updating for cache invalidation

@@ -113,6 +113,7 @@ function SettingsFormContent({ user }: { user: User }) {
       // Create FormData for profile update
       const formData = new FormData();
       formData.append("userId", user.id);
+      // Only include imageUrl if a new image was uploaded
       if (imageUrl !== undefined) {
         formData.append("imageUrl", imageUrl);
       }
